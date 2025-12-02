@@ -3,7 +3,7 @@
 import sys
 from typing import List, cast
 
-from . import keyboard, mouse
+from . import consumer, keyboard, mouse, system
 from .hid import check_device
 from .mouse import ButtonType
 
@@ -13,25 +13,31 @@ def print_help() -> None:
     print("KindaVM - USB HID Keyboard and Mouse Emulation", file=sys.stderr)
     print("", file=sys.stderr)
     print("Usage:", file=sys.stderr)
-    print("  kinda type <text>              Type text string", file=sys.stderr)
-    print(
-        "  kinda key <keycode> [modifier] Send specific key with optional modifier",
-        file=sys.stderr,
-    )
-    print("  kinda mouse move <x> <y>       Move mouse cursor", file=sys.stderr)
-    print(
-        "  kinda mouse click [button]     Click mouse button (left/right/middle)",
-        file=sys.stderr,
-    )
-    print("  kinda mouse scroll <amount>    Scroll mouse wheel", file=sys.stderr)
-    print("  kinda mouse drag <x> <y> [button] Drag with button held", file=sys.stderr)
+    print("  kinda type <text>                      Type text string", file=sys.stderr)
+    print("  kinda special-key <key>                Send special key", file=sys.stderr)
+    print("  kinda raw-key <keycode> [modifier]     Send raw HID keycode", file=sys.stderr)
+    print("  kinda mouse move <x> <y>               Move mouse cursor", file=sys.stderr)
+    print("  kinda mouse click [button]             Click mouse button", file=sys.stderr)
+    print("  kinda mouse scroll <amount>            Scroll mouse wheel", file=sys.stderr)
+    print("  kinda mouse drag <x> <y> [button]      Drag with button held", file=sys.stderr)
+    print("", file=sys.stderr)
+    print("Special keys:", file=sys.stderr)
+    print("  Navigation: f1-f12, esc, home, end, pageup, pagedown, insert, delete,", file=sys.stderr)
+    print("              up, down, left, right, printscreen, scrolllock, pause", file=sys.stderr)
+    print("  Media:      play, next, prev, stop", file=sys.stderr)
+    print("  Volume:     volume-up, volume-down, mute", file=sys.stderr)
+    print("  Brightness: brightness-up, brightness-down", file=sys.stderr)
+    print("  Power:      power, sleep, wake", file=sys.stderr)
     print("", file=sys.stderr)
     print("Examples:", file=sys.stderr)
     print("  kinda type 'Hello World'", file=sys.stderr)
     print("  echo 'test' | kinda type", file=sys.stderr)
+    print("  kinda special-key f1", file=sys.stderr)
+    print("  kinda special-key play", file=sys.stderr)
+    print("  kinda special-key volume-up", file=sys.stderr)
+    print("  kinda raw-key 0x04 0x02", file=sys.stderr)
     print("  kinda mouse move 10 20", file=sys.stderr)
     print("  kinda mouse click right", file=sys.stderr)
-    print("  kinda mouse scroll -5", file=sys.stderr)
 
 
 def cmd_type(args: List[str]) -> int:
@@ -52,11 +58,11 @@ def cmd_type(args: List[str]) -> int:
     return 0
 
 
-def cmd_key(args: List[str]) -> int:
-    """Handle 'key' command."""
+def cmd_raw_key(args: List[str]) -> int:
+    """Handle 'raw-key' command."""
     if not args:
         print("Error: No keycode provided", file=sys.stderr)
-        print("Usage: kinda key <keycode> [modifier]", file=sys.stderr)
+        print("Usage: kinda raw-key <keycode> [modifier]", file=sys.stderr)
         return 1
 
     try:
@@ -75,6 +81,72 @@ def cmd_key(args: List[str]) -> int:
 
     keyboard.send_key(keycode, modifier)
     return 0
+
+
+def cmd_special_key(args: List[str]) -> int:
+    """Handle 'special-key' command for all special keys."""
+    if not args:
+        print("Error: No key specified", file=sys.stderr)
+        print("Usage: kinda special-key <key>", file=sys.stderr)
+        print("See 'kinda help' for available keys", file=sys.stderr)
+        return 1
+
+    key = args[0].lower()
+
+    # Map of all special keys to their functions
+    special_key_map = {
+        # Navigation keys (send keyboard keycodes)
+        "esc": lambda: keyboard.send_key(keyboard.KEY_ESCAPE),
+        "f1": lambda: keyboard.send_key(keyboard.KEY_F1),
+        "f2": lambda: keyboard.send_key(keyboard.KEY_F2),
+        "f3": lambda: keyboard.send_key(keyboard.KEY_F3),
+        "f4": lambda: keyboard.send_key(keyboard.KEY_F4),
+        "f5": lambda: keyboard.send_key(keyboard.KEY_F5),
+        "f6": lambda: keyboard.send_key(keyboard.KEY_F6),
+        "f7": lambda: keyboard.send_key(keyboard.KEY_F7),
+        "f8": lambda: keyboard.send_key(keyboard.KEY_F8),
+        "f9": lambda: keyboard.send_key(keyboard.KEY_F9),
+        "f10": lambda: keyboard.send_key(keyboard.KEY_F10),
+        "f11": lambda: keyboard.send_key(keyboard.KEY_F11),
+        "f12": lambda: keyboard.send_key(keyboard.KEY_F12),
+        "printscreen": lambda: keyboard.send_key(keyboard.KEY_PRINT_SCREEN),
+        "scrolllock": lambda: keyboard.send_key(keyboard.KEY_SCROLL_LOCK),
+        "pause": lambda: keyboard.send_key(keyboard.KEY_PAUSE),
+        "insert": lambda: keyboard.send_key(keyboard.KEY_INSERT),
+        "home": lambda: keyboard.send_key(keyboard.KEY_HOME),
+        "pageup": lambda: keyboard.send_key(keyboard.KEY_PAGE_UP),
+        "delete": lambda: keyboard.send_key(keyboard.KEY_DELETE),
+        "end": lambda: keyboard.send_key(keyboard.KEY_END),
+        "pagedown": lambda: keyboard.send_key(keyboard.KEY_PAGE_DOWN),
+        "right": lambda: keyboard.send_key(keyboard.KEY_RIGHT_ARROW),
+        "left": lambda: keyboard.send_key(keyboard.KEY_LEFT_ARROW),
+        "down": lambda: keyboard.send_key(keyboard.KEY_DOWN_ARROW),
+        "up": lambda: keyboard.send_key(keyboard.KEY_UP_ARROW),
+        # Media keys
+        "play": consumer.play_pause,
+        "next": consumer.next_track,
+        "prev": consumer.prev_track,
+        "stop": consumer.stop,
+        # Volume keys
+        "volume-up": consumer.volume_up,
+        "volume-down": consumer.volume_down,
+        "mute": consumer.mute,
+        # Brightness keys
+        "brightness-up": consumer.brightness_up,
+        "brightness-down": consumer.brightness_down,
+        # Power keys
+        "power": system.power,
+        "sleep": system.sleep,
+        "wake": system.wake,
+    }
+
+    if key in special_key_map:
+        special_key_map[key]()
+        return 0
+    else:
+        print(f"Error: Unknown special key: {key}", file=sys.stderr)
+        print("See 'kinda help' for available keys", file=sys.stderr)
+        return 1
 
 
 def cmd_mouse(args: List[str]) -> int:
@@ -174,8 +246,10 @@ def main() -> int:
 
     if command == "type":
         return cmd_type(args)
-    elif command == "key":
-        return cmd_key(args)
+    elif command in ["special-key", "special"]:
+        return cmd_special_key(args)
+    elif command in ["raw-key", "key"]:
+        return cmd_raw_key(args)
     elif command == "mouse":
         return cmd_mouse(args)
     elif command in ["help", "-h", "--help"]:

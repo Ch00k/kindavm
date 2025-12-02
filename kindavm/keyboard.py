@@ -91,6 +91,7 @@ KEY_MAP = {
     "(": (0x26, True),
     ")": (0x27, True),
     "\n": (0x28, False),  # Enter
+    "\b": (0x2A, False),  # Backspace
     "\t": (0x2B, False),  # Tab
     " ": (0x2C, False),  # Space
     "-": (0x2D, False),
@@ -117,6 +118,34 @@ KEY_MAP = {
     "?": (0x38, True),
 }
 
+# Special key codes (not characters, used with send_key directly)
+KEY_ESCAPE = 0x29
+KEY_F1 = 0x3A
+KEY_F2 = 0x3B
+KEY_F3 = 0x3C
+KEY_F4 = 0x3D
+KEY_F5 = 0x3E
+KEY_F6 = 0x3F
+KEY_F7 = 0x40
+KEY_F8 = 0x41
+KEY_F9 = 0x42
+KEY_F10 = 0x43
+KEY_F11 = 0x44
+KEY_F12 = 0x45
+KEY_PRINT_SCREEN = 0x46
+KEY_SCROLL_LOCK = 0x47
+KEY_PAUSE = 0x48
+KEY_INSERT = 0x49
+KEY_HOME = 0x4A
+KEY_PAGE_UP = 0x4B
+KEY_DELETE = 0x4C
+KEY_END = 0x4D
+KEY_PAGE_DOWN = 0x4E
+KEY_RIGHT_ARROW = 0x4F
+KEY_LEFT_ARROW = 0x50
+KEY_DOWN_ARROW = 0x51
+KEY_UP_ARROW = 0x52
+
 
 def send_key(keycode: int, modifier: int = MOD_NONE) -> None:
     """Send a key press and release.
@@ -138,8 +167,11 @@ def type_string(text: str) -> None:
     """Type a string by sending HID reports for each character.
 
     Args:
-        text: The text to type
+        text: The text to type (escape sequences like \\n are interpreted)
     """
+    # Process escape sequences
+    text = text.replace("\\n", "\n").replace("\\t", "\t").replace("\\b", "\b")
+
     for char in text:
         if char not in KEY_MAP:
             print(f"Warning: Character '{char}' not in keymap, skipping", file=sys.stderr)

@@ -1,6 +1,6 @@
 [project]
 name = "kindavm"
-version = "0.0.1"
+version = "0.0.2"
 description = "USB HID keyboard and mouse emulation for KVM usage"
 authors = [{ name = "Andrii Yurchuk", email = "ay@mntw.re" }]
 readme = "README.md"
