@@ -4,6 +4,8 @@ class KindaVMClient {
         this.reconnectDelay = 1000;
         this.maxReconnectDelay = 30000;
         this.controlArea = document.getElementById('controlArea');
+        this.videoFeed = document.getElementById('videoFeed');
+        this.placeholder = document.getElementById('placeholder');
         this.statusIndicator = document.getElementById('statusIndicator');
         this.statusText = document.getElementById('statusText');
         this.isActive = false;
@@ -15,6 +17,22 @@ class KindaVMClient {
     init() {
         this.connect();
         this.setupEventListeners();
+        this.setupVideoFeed();
+    }
+
+    setupVideoFeed() {
+        // Show video feed when it loads successfully
+        this.videoFeed.onload = () => {
+            this.videoFeed.style.display = 'block';
+            this.placeholder.style.display = 'none';
+        };
+
+        // Handle video feed errors
+        this.videoFeed.onerror = () => {
+            console.warn('Video feed failed to load');
+            this.videoFeed.style.display = 'none';
+            this.placeholder.style.display = 'flex';
+        };
     }
 
     connect() {

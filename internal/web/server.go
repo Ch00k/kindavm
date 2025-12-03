@@ -11,6 +11,7 @@ import (
 	"time"
 
 	"github.com/Ch00k/kindavm/internal/events"
+	"github.com/Ch00k/kindavm/internal/video"
 	"github.com/coder/websocket"
 )
 
@@ -19,15 +20,17 @@ var staticFiles embed.FS
 
 // Server represents the HTTP server with WebSocket support
 type Server struct {
-	handler *events.Handler
-	addr    string
+	handler  *events.Handler
+	streamer *video.MJPEGStreamer
+	addr     string
 }
 
 // NewServer creates a new web server
-func NewServer(addr string, handler *events.Handler) *Server {
+func NewServer(addr string, handler *events.Handler, streamer *video.MJPEGStreamer) *Server {
 	return &Server{
-		addr:    addr,
-		handler: handler,
+		addr:     addr,
+		handler:  handler,
+		streamer: streamer,
 	}
 }
 
@@ -114,6 +117,11 @@ func (s *Server) Run(ctx context.Context) error {
 
 	// WebSocket endpoint
 	mux.HandleFunc("/ws", s.handleWebSocket)
+
+	// Video stream endpoint
+	if s.streamer != nil {
+		mux.HandleFunc("/stream", s.streamer.ServeHTTP)
+	}
 
 	srv.Handler = mux
 

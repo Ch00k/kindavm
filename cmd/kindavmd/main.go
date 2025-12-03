@@ -12,6 +12,7 @@ import (
 
 	"github.com/Ch00k/kindavm/internal/events"
 	"github.com/Ch00k/kindavm/internal/hid"
+	"github.com/Ch00k/kindavm/internal/video"
 	"github.com/Ch00k/kindavm/internal/web"
 )
 
@@ -21,6 +22,14 @@ func main() {
 	// Command line flags
 	addr := flag.String("addr", "localhost:8080", "HTTP server address")
 	hidDevice := flag.String("hid", "/dev/hidg0", "HID device path")
+
+	// Video streaming flags
+	enableVideo := flag.Bool("video", false, "Enable video streaming")
+	videoWidth := flag.Int("video-width", 640, "Video width in pixels")
+	videoHeight := flag.Int("video-height", 480, "Video height in pixels")
+	videoFramerate := flag.Int("video-framerate", 30, "Video framerate (fps)")
+	videoQuality := flag.Int("video-quality", 80, "MJPEG quality (1-100)")
+
 	version := flag.Bool("version", false, "Print version and exit")
 	flag.Parse()
 
@@ -39,32 +48,65 @@ func main() {
 	// Create event handler
 	handler := events.NewHandler(device)
 
-	// Create web server
-	server := web.NewServer(*addr, handler)
+	// Create video streamer if enabled
+	var streamer *video.MJPEGStreamer
+	if *enableVideo {
+		config := video.Config{
+			Width:     *videoWidth,
+			Height:    *videoHeight,
+			Framerate: *videoFramerate,
+			Quality:   *videoQuality,
+		}
+		streamer = video.NewMJPEGStreamer(config)
+	}
 
+	// Create web server
+	server := web.NewServer(*addr, handler, streamer)
+
+	if err := run(*addr, server, streamer); err != nil {
+		log.Fatalf("Error: %v", err)
+	}
+}
+
+func run(addr string, server *web.Server, streamer *video.MJPEGStreamer) error {
 	// Setup context with cancellation
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
+
+	// Start video streamer if enabled
+	if streamer != nil {
+		if err := streamer.Start(ctx); err != nil {
+			return fmt.Errorf("failed to start video streamer: %w", err)
+		}
+		defer streamer.Stop()
+		log.Println("Video streaming enabled")
+	}
 
 	// Setup signal handling for graceful shutdown
 	sigChan := make(chan os.Signal, 1)
 	signal.Notify(sigChan, os.Interrupt, syscall.SIGTERM)
 
 	// Start server in goroutine
+	errChan := make(chan error, 1)
 	go func() {
 		if err := server.Run(ctx); err != nil {
-			log.Fatalf("Server error: %v", err)
+			errChan <- fmt.Errorf("server error: %w", err)
 		}
 	}()
 
 	log.Println("KindaVM daemon started")
-	log.Printf("Web interface: http://%s", *addr)
+	log.Printf("Web interface: http://%s", addr)
 	log.Println("Press Ctrl+C to stop")
 
-	// Wait for shutdown signal
-	<-sigChan
-	log.Println("Shutdown signal received")
-	cancel()
+	// Wait for shutdown signal or server error
+	select {
+	case <-sigChan:
+		log.Println("Shutdown signal received")
+		cancel()
+	case err := <-errChan:
+		return err
+	}
 
 	log.Println("KindaVM daemon stopped")
+	return nil
 }
