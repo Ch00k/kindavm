@@ -4,10 +4,12 @@ package web
 import (
 	"context"
 	"embed"
+	"encoding/json"
 	"fmt"
 	"io/fs"
 	"log"
 	"net/http"
+	"os"
 	"time"
 
 	"github.com/Ch00k/kindavm/internal/events"
@@ -20,17 +22,21 @@ var staticFiles embed.FS
 
 // Server represents the HTTP server with WebSocket support
 type Server struct {
-	handler  *events.Handler
-	streamer *video.MJPEGStreamer
-	addr     string
+	handler      *events.Handler
+	h264Streamer *video.H264Streamer
+	addr         string
 }
 
 // NewServer creates a new web server
-func NewServer(addr string, handler *events.Handler, streamer *video.MJPEGStreamer) *Server {
+func NewServer(
+	addr string,
+	handler *events.Handler,
+	h264Streamer *video.H264Streamer,
+) *Server {
 	return &Server{
-		addr:     addr,
-		handler:  handler,
-		streamer: streamer,
+		addr:         addr,
+		handler:      handler,
+		h264Streamer: h264Streamer,
 	}
 }
 
@@ -76,6 +82,33 @@ func (s *Server) handleWebSocket(w http.ResponseWriter, r *http.Request) {
 	log.Printf("WebSocket connection closed from %s", r.RemoteAddr)
 }
 
+// handleCameraModes returns available camera modes as JSON
+func (s *Server) handleCameraModes(w http.ResponseWriter, _ *http.Request) {
+	modes := s.h264Streamer.GetCameraModes()
+
+	w.Header().Set("Content-Type", "application/json")
+	if err := json.NewEncoder(w).Encode(modes); err != nil {
+		log.Printf("Error encoding camera modes: %v", err)
+		http.Error(w, "Internal server error", http.StatusInternalServerError)
+	}
+}
+
+// handleHostname returns the server hostname as JSON
+func (s *Server) handleHostname(w http.ResponseWriter, _ *http.Request) {
+	hostname, err := os.Hostname()
+	if err != nil {
+		log.Printf("Error getting hostname: %v", err)
+		http.Error(w, "Internal server error", http.StatusInternalServerError)
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	if err := json.NewEncoder(w).Encode(map[string]string{"hostname": hostname}); err != nil {
+		log.Printf("Error encoding hostname: %v", err)
+		http.Error(w, "Internal server error", http.StatusInternalServerError)
+	}
+}
+
 // handleConnection handles messages from a WebSocket connection
 func (s *Server) handleConnection(ctx context.Context, conn *websocket.Conn) error {
 	for {
@@ -100,10 +133,9 @@ func (s *Server) handleConnection(ctx context.Context, conn *websocket.Conn) err
 // Run starts the server with graceful shutdown support
 func (s *Server) Run(ctx context.Context) error {
 	srv := &http.Server{
-		Addr:         s.addr,
-		ReadTimeout:  10 * time.Second,
-		WriteTimeout: 10 * time.Second,
-		IdleTimeout:  60 * time.Second,
+		Addr:        s.addr,
+		ReadTimeout: 10 * time.Second,
+		IdleTimeout: 60 * time.Second,
 	}
 
 	mux := http.NewServeMux()
@@ -118,9 +150,13 @@ func (s *Server) Run(ctx context.Context) error {
 	// WebSocket endpoint
 	mux.HandleFunc("/ws", s.handleWebSocket)
 
+	// API endpoints
+	mux.HandleFunc("/hostname", s.handleHostname)
+
 	// Video stream endpoint
-	if s.streamer != nil {
-		mux.HandleFunc("/stream", s.streamer.ServeHTTP)
+	if s.h264Streamer != nil {
+		mux.HandleFunc("/video-stream", s.h264Streamer.HandleWebSocket)
+		mux.HandleFunc("/camera-modes", s.handleCameraModes)
 	}
 
 	srv.Handler = mux

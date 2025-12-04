@@ -8,7 +8,7 @@ The `kindavmd` daemon provides a web-based interface for controlling a target ma
 - **Keyboard Control**: Full keyboard input with modifier key support
 - **Mouse Control**: Mouse movement, clicking, and scrolling via Pointer Lock API
 - **WebSocket Communication**: Real-time, low-latency event transmission
-- **No Video (Phase 2)**: Currently keyboard and mouse only; video streaming will be added in Phase 3
+- **H264 Video Streaming**: On-demand video streaming with configurable resolution and framerate
 
 ## Building
 
@@ -56,15 +56,19 @@ The Pi Zero 2W has an ARM Cortex-A53 (ARMv8-A) processor that supports both 32-b
 ## Usage
 
 1. Start the daemon on your Raspberry Pi Zero 2W (or any device with HID gadget configured)
+   ```bash
+   ./kindavmd
+   ```
 2. Access the web interface via SSH port forward or Tailscale:
    ```bash
    # SSH port forward example
    ssh -L 8080:localhost:8080 pi@raspberrypi.local
    ```
 3. Open your browser to `http://localhost:8080`
-4. Click the control area to activate keyboard/mouse capture
-5. Control the target machine
-6. Press ESC to release control
+4. (Optional) Configure video resolution and framerate in the web UI
+5. Click the control area to activate keyboard/mouse capture and start video stream
+6. Control the target machine
+7. Press ESC to release control and stop video stream
 
 ## Architecture
 
@@ -72,7 +76,8 @@ The daemon consists of several components:
 
 - **HID Module** (`internal/hid`): Generates HID reports for keyboard and mouse
 - **Events Module** (`internal/events`): Translates browser events to HID reports
-- **Web Module** (`internal/web`): HTTP server with WebSocket endpoint and static file serving
+- **Video Module** (`internal/video`): H264 video streaming via WebSocket
+- **Web Module** (`internal/web`): HTTP server with WebSocket endpoints and static file serving
 - **Main** (`cmd/kindavmd`): Daemon entry point with signal handling
 
 ## Browser Compatibility
@@ -119,12 +124,12 @@ Check that:
 
 Verify the HID gadget is connected to the target machine via USB cable.
 
-## Next Steps (Phase 3)
+### Video not working
 
-- Camera integration for video streaming
-- MJPEG support
-- H264 hardware encoding
-- Video quality tuning
+Ensure:
+1. `rpicam-vid` is installed on your system
+2. A camera is connected and working
+3. Click inside the control area to start the video stream
 
 ## License
 
