@@ -13,12 +13,26 @@ type EventType string
 
 // Event type constants for browser events
 const (
-	EventKeyDown   EventType = "keydown"
-	EventKeyUp     EventType = "keyup"
-	EventMouseMove EventType = "mousemove"
-	EventMouseDown EventType = "mousedown"
-	EventMouseUp   EventType = "mouseup"
-	EventWheel     EventType = "wheel"
+	EventKeyDown        EventType = "keydown"
+	EventKeyUp          EventType = "keyup"
+	EventMouseMove      EventType = "mousemove"
+	EventMouseDown      EventType = "mousedown"
+	EventMouseUp        EventType = "mouseup"
+	EventWheel          EventType = "wheel"
+	EventBrightnessUp   EventType = "brightness_up"
+	EventBrightnessDown EventType = "brightness_down"
+	EventVolumeUp       EventType = "volume_up"
+	EventVolumeDown     EventType = "volume_down"
+	EventCtrlW          EventType = "ctrl_w"
+	EventCtrlT          EventType = "ctrl_t"
+	EventCtrlN          EventType = "ctrl_n"
+	EventCtrlTab        EventType = "ctrl_tab"
+	EventCtrlShiftTab   EventType = "ctrl_shift_tab"
+	EventCtrlShiftT     EventType = "ctrl_shift_t"
+	EventCtrlQ          EventType = "ctrl_q"
+	EventCtrlF4         EventType = "ctrl_f4"
+	EventAltF4          EventType = "alt_f4"
+	EventF11            EventType = "f11"
 )
 
 // BrowserEvent represents an event from the browser
@@ -36,6 +50,7 @@ type BrowserEvent struct {
 type Handler struct {
 	keyboard       *hid.Keyboard
 	mouse          *hid.Mouse
+	consumer       *hid.Consumer
 	pressedKeys    map[string]bool // Track currently pressed keys
 	pressedButtons map[string]bool // Track currently pressed mouse buttons
 }
@@ -45,6 +60,7 @@ func NewHandler(device *hid.Device) *Handler {
 	return &Handler{
 		keyboard:       hid.NewKeyboard(device),
 		mouse:          hid.NewMouse(device),
+		consumer:       hid.NewConsumer(device),
 		pressedKeys:    make(map[string]bool),
 		pressedButtons: make(map[string]bool),
 	}
@@ -70,6 +86,34 @@ func (h *Handler) HandleEvent(data []byte) error {
 		return h.handleMouseUp(event)
 	case EventWheel:
 		return h.handleWheel(event)
+	case EventBrightnessUp:
+		return h.handleBrightnessUp()
+	case EventBrightnessDown:
+		return h.handleBrightnessDown()
+	case EventVolumeUp:
+		return h.handleVolumeUp()
+	case EventVolumeDown:
+		return h.handleVolumeDown()
+	case EventCtrlW:
+		return h.handleCtrlW()
+	case EventCtrlT:
+		return h.handleCtrlT()
+	case EventCtrlN:
+		return h.handleCtrlN()
+	case EventCtrlTab:
+		return h.handleCtrlTab()
+	case EventCtrlShiftTab:
+		return h.handleCtrlShiftTab()
+	case EventCtrlShiftT:
+		return h.handleCtrlShiftT()
+	case EventCtrlQ:
+		return h.handleCtrlQ()
+	case EventCtrlF4:
+		return h.handleCtrlF4()
+	case EventAltF4:
+		return h.handleAltF4()
+	case EventF11:
+		return h.handleF11()
 	default:
 		return fmt.Errorf("unknown event type: %s", event.Type)
 	}
@@ -227,4 +271,60 @@ func (h *Handler) getMouseButtonBits() byte {
 	}
 
 	return bits
+}
+
+func (h *Handler) handleBrightnessUp() error {
+	return h.consumer.BrightnessUp()
+}
+
+func (h *Handler) handleBrightnessDown() error {
+	return h.consumer.BrightnessDown()
+}
+
+func (h *Handler) handleVolumeUp() error {
+	return h.consumer.VolumeUp()
+}
+
+func (h *Handler) handleVolumeDown() error {
+	return h.consumer.VolumeDown()
+}
+
+func (h *Handler) handleCtrlW() error {
+	return h.keyboard.SendCtrlW()
+}
+
+func (h *Handler) handleCtrlT() error {
+	return h.keyboard.SendCtrlT()
+}
+
+func (h *Handler) handleCtrlN() error {
+	return h.keyboard.SendCtrlN()
+}
+
+func (h *Handler) handleCtrlTab() error {
+	return h.keyboard.SendCtrlTab()
+}
+
+func (h *Handler) handleCtrlShiftTab() error {
+	return h.keyboard.SendCtrlShiftTab()
+}
+
+func (h *Handler) handleCtrlShiftT() error {
+	return h.keyboard.SendCtrlShiftT()
+}
+
+func (h *Handler) handleCtrlQ() error {
+	return h.keyboard.SendCtrlQ()
+}
+
+func (h *Handler) handleCtrlF4() error {
+	return h.keyboard.SendCtrlF4()
+}
+
+func (h *Handler) handleAltF4() error {
+	return h.keyboard.SendAltF4()
+}
+
+func (h *Handler) handleF11() error {
+	return h.keyboard.SendF11()
 }

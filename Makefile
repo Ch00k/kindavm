@@ -1,4 +1,4 @@
-.PHONY: lint test test-verbose test-one test-ci build build-native release-patch release-minor release-major
+.PHONY: lint test test-verbose test-one test-ci build build-native run release-patch release-minor release-major
 
 .EXPORT_ALL_VARIABLES:
 
@@ -33,6 +33,9 @@ build:
 
 build-native:
 	go build -trimpath -ldflags="-s -w -X main.Version=${KINDAVMD_VERSION}" -o ./${KINDAVMD_BUILD_ARTIFACTS_DIR}/${KINDAVMD_EXECUTABLE_FILENAME}-native ./cmd/kindavmd
+
+run:
+	go run ./cmd/kindavmd
 
 release-patch:
 	./release.sh patch
