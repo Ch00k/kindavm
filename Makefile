@@ -51,6 +51,7 @@ package: build
 	@mkdir -p $(KINDAVMD_BUILD_ARTIFACTS_DIR)/package/configs
 	@cp configs/boot.conf $(KINDAVMD_BUILD_ARTIFACTS_DIR)/package/configs/
 	@cp configs/edid.hex $(KINDAVMD_BUILD_ARTIFACTS_DIR)/package/configs/
+	@cp configs/hid_report_desc.bin $(KINDAVMD_BUILD_ARTIFACTS_DIR)/package/configs/
 	@cp configs/modules.conf $(KINDAVMD_BUILD_ARTIFACTS_DIR)/package/configs/
 	@cd $(KINDAVMD_BUILD_ARTIFACTS_DIR)/package && tar -czf ../kindavm-linux-arm64.tar.gz *
 	@rm -rf $(KINDAVMD_BUILD_ARTIFACTS_DIR)/package
