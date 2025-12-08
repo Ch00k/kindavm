@@ -1,12 +1,6 @@
 #!/usr/bin/env bash
 set -e
 
-# Check if running as root
-if [ "$EUID" -ne 0 ]; then
-    echo "Error: This script must be run as root (use sudo)" >&2
-    exit 1
-fi
-
 # Detect installation mode
 UPGRADE_MODE=false
 CURRENT_VERSION="unknown"
@@ -60,8 +54,8 @@ fi
 # Stop services if upgrading
 if [ "$UPGRADE_MODE" = true ]; then
     echo "Stopping services..."
-    systemctl stop kindavmd.service || true
-    systemctl stop kindavm-init.service || true
+    sudo systemctl stop kindavmd.service || true
+    sudo systemctl stop kindavm-init.service || true
 fi
 
 # Download and extract release archive
@@ -76,8 +70,8 @@ rm kindavm.tar.gz
 
 # Install dependencies
 echo "Installing dependencies..."
-apt-get update
-apt-get install --no-install-recommends --no-install-suggests --yes v4l-utils
+sudo apt-get update
+sudo apt-get install --no-install-recommends --no-install-suggests --yes v4l-utils
 
 echo "Installing KindaVM..."
 
@@ -86,63 +80,64 @@ NEEDS_REBOOT=false
 
 # Install boot configuration
 echo "Installing boot configuration..."
-if ! cmp -s /boot/firmware/config.txt configs/config.txt; then
+if ! cmp -s /boot/firmware/config.txt configs/boot.conf; then
     echo "Boot configuration has changed, backup and update..."
-    cp /boot/firmware/config.txt /boot/firmware/config.txt.backup
-    cp configs/config.txt /boot/firmware/config.txt
+    sudo cp /boot/firmware/config.txt /boot/firmware/config.txt.backup
+    sudo cp configs/boot.conf /boot/firmware/config.txt
     NEEDS_REBOOT=true
 else
     echo "Boot configuration is already up to date"
 fi
 
 # Configure automatic module loading
-if [ -f /etc/modules-load.d/kindavm.conf ]; then
-    echo "Module loading configuration already exists at /etc/modules-load.d/kindavm.conf"
-else
-    echo "Creating module loading configuration at /etc/modules-load.d/kindavm.conf"
-    echo -en 'dwc2\nlibcomposite\n' | tee /etc/modules-load.d/kindavm.conf
+echo "Installing module loading configuration..."
+if ! cmp -s /etc/modules-load.d/kindavm.conf configs/modules.conf 2>/dev/null; then
+    echo "Module loading configuration has changed, updating..."
+    sudo cp configs/modules.conf /etc/modules-load.d/kindavm.conf
     NEEDS_REBOOT=true
+else
+    echo "Module loading configuration is already up to date"
 fi
 
 # Install kindavmd binary
 echo "Installing kindavmd binary..."
-cp kindavmd /usr/local/bin/kindavmd
-chmod +x /usr/local/bin/kindavmd
+sudo cp kindavmd /usr/local/bin/kindavmd
+sudo chmod +x /usr/local/bin/kindavmd
 
 # Install edidmod tool
 echo "Installing edidmod tool..."
-cp edidmod /usr/local/bin/edidmod
-chmod +x /usr/local/bin/edidmod
+sudo cp edidmod /usr/local/bin/edidmod
+sudo chmod +x /usr/local/bin/edidmod
 
 # Install ustreamer tool
 echo "Installing ustreamer tool..."
-cp ustreamer /usr/local/bin/ustreamer
-chmod +x /usr/local/bin/ustreamer
+sudo cp ustreamer /usr/local/bin/ustreamer
+sudo chmod +x /usr/local/bin/ustreamer
 
 # Install init and uninstall scripts
 echo "Installing HID initialization script..."
-cp init_hid.sh /usr/local/bin/kindavm-init-hid.sh
-chmod +x /usr/local/bin/kindavm-init-hid.sh
+sudo cp init_hid.sh /usr/local/bin/kindavm-init-hid.sh
+sudo chmod +x /usr/local/bin/kindavm-init-hid.sh
 
 echo "Installing HDMI initialization script..."
-cp init_hdmi.sh /usr/local/bin/kindavm-init-hdmi.sh
-chmod +x /usr/local/bin/kindavm-init-hdmi.sh
+sudo cp init_hdmi.sh /usr/local/bin/kindavm-init-hdmi.sh
+sudo chmod +x /usr/local/bin/kindavm-init-hdmi.sh
 
 echo "Installing HDMI EDID file..."
-mkdir -p /usr/local/lib/kindavm
-cp configs/edid.hex /usr/local/lib/kindavm/edid.hex
+sudo mkdir -p /usr/local/lib/kindavm
+sudo cp configs/edid.hex /usr/local/lib/kindavm/edid.hex
 
 echo "Installing uninstall script..."
-cp uninstall.sh /usr/local/bin/kindavm-uninstall.sh
-chmod +x /usr/local/bin/kindavm-uninstall.sh
+sudo cp uninstall.sh /usr/local/bin/kindavm-uninstall.sh
+sudo chmod +x /usr/local/bin/kindavm-uninstall.sh
 
 # Install systemd services
 echo "Installing systemd services..."
-cp kindavm-init.service /etc/systemd/system/
-cp kindavmd.service /etc/systemd/system/
-systemctl daemon-reload
-systemctl enable kindavm-init.service
-systemctl enable kindavmd.service
+sudo cp kindavm-init.service /etc/systemd/system/
+sudo cp kindavmd.service /etc/systemd/system/
+sudo systemctl daemon-reload
+sudo systemctl enable kindavm-init.service
+sudo systemctl enable kindavmd.service
 
 # Cleanup
 cd /

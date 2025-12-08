@@ -49,8 +49,9 @@ package: build
 	@cp tools/edidmod $(KINDAVMD_BUILD_ARTIFACTS_DIR)/package/
 	@cp tools/ustreamer $(KINDAVMD_BUILD_ARTIFACTS_DIR)/package/
 	@mkdir -p $(KINDAVMD_BUILD_ARTIFACTS_DIR)/package/configs
-	@cp configs/config.txt $(KINDAVMD_BUILD_ARTIFACTS_DIR)/package/configs/
+	@cp configs/boot.conf $(KINDAVMD_BUILD_ARTIFACTS_DIR)/package/configs/
 	@cp configs/edid.hex $(KINDAVMD_BUILD_ARTIFACTS_DIR)/package/configs/
+	@cp configs/modules.conf $(KINDAVMD_BUILD_ARTIFACTS_DIR)/package/configs/
 	@cd $(KINDAVMD_BUILD_ARTIFACTS_DIR)/package && tar -czf ../kindavm-linux-arm64.tar.gz *
 	@rm -rf $(KINDAVMD_BUILD_ARTIFACTS_DIR)/package
 	@echo "Package created: $(KINDAVMD_BUILD_ARTIFACTS_DIR)/kindavm-linux-arm64.tar.gz"
