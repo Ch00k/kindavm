@@ -4,27 +4,24 @@ class KindaVMClient {
         this.reconnectDelay = 1000;
         this.maxReconnectDelay = 30000;
         this.controlArea = document.getElementById('controlArea');
-        this.videoFeed = document.getElementById('videoFeed');
+        this.mjpegFeed = document.getElementById('mjpegFeed');
         this.placeholder = document.getElementById('placeholder');
         this.isActive = false;
         this.pressedKeys = new Set();
-        this.h264Player = null;
-        this.videoSettings = {
-            width: 0,
-            height: 0,
-            framerate: 30
-        };
+        this.ustreamerAddr = null; // Will be loaded from server config
 
         this.init();
     }
 
     init() {
         this.setupEventListeners();
-        this.loadCameraModes();
         this.setupVideoControls();
         this.setupSystemControls();
         this.setupKeyboardShortcuts();
+        this.setupSettings();
         this.loadHostname();
+        this.loadConfig();
+        this.loadSettings();
     }
 
     async loadHostname() {
@@ -44,94 +41,190 @@ class KindaVMClient {
         }
     }
 
-    async loadCameraModes() {
+    async loadConfig() {
         try {
-            const response = await fetch('/camera-modes');
+            const response = await fetch('/config');
             if (!response.ok) {
-                console.warn('Failed to load camera modes, using defaults');
+                console.warn('Failed to load config');
                 return;
             }
 
-            const modes = await response.json();
-            if (!modes || modes.length === 0) {
-                console.warn('No camera modes returned, using defaults');
-                return;
+            const data = await response.json();
+            if (data.ustreamerAddr) {
+                this.ustreamerAddr = data.ustreamerAddr;
+                console.log('ustreamer address:', this.ustreamerAddr);
             }
-
-            this.populateResolutionDropdown(modes);
         } catch (err) {
-            console.error('Error loading camera modes:', err);
+            console.error('Error loading config:', err);
         }
     }
 
-    populateResolutionDropdown(modes) {
-        const resolutionSelect = document.getElementById('resolution');
+    setupVideoControls() {
+        const playControl = document.getElementById('playControl');
+        const stopControl = document.getElementById('stopControl');
+        const keyboardToggle = document.getElementById('keyboardToggle');
+        const keyboardPopup = document.getElementById('keyboardPopup');
+        const closePopup = document.getElementById('closePopup');
 
-        // Clear existing options except default
-        resolutionSelect.innerHTML = '<option value="default" selected>Default (camera native)</option>';
-
-        // Add detected modes
-        modes.forEach(mode => {
-            const option = document.createElement('option');
-            option.value = `${mode.Width}x${mode.Height}`;
-            option.textContent = `${mode.Width}x${mode.Height}`;
-            resolutionSelect.appendChild(option);
+        playControl.addEventListener('click', (e) => {
+            e.stopPropagation();
+            this.activateControl();
         });
 
-        console.log(`Loaded ${modes.length} camera modes`);
+        stopControl.addEventListener('click', (e) => {
+            e.stopPropagation();
+            this.stopControl();
+        });
+
+        keyboardToggle.addEventListener('click', (e) => {
+            e.stopPropagation();
+            keyboardPopup.classList.add('show');
+        });
+
+        closePopup.addEventListener('click', (e) => {
+            e.stopPropagation();
+            keyboardPopup.classList.remove('show');
+        });
+
+        keyboardPopup.addEventListener('click', (e) => {
+            if (e.target === keyboardPopup) {
+                keyboardPopup.classList.remove('show');
+            }
+        });
     }
 
-    setupVideoControls() {
-        const resolutionSelect = document.getElementById('resolution');
-        const framerateSelect = document.getElementById('framerate');
-        const expandToggle = document.getElementById('expandToggle');
-        const closeExpand = document.getElementById('closeExpand');
+    setupSettings() {
+        const settingsToggle = document.getElementById('settingsToggle');
+        const settingsPopup = document.getElementById('settingsPopup');
+        const closeSettingsPopup = document.getElementById('closeSettingsPopup');
+        const saveSettings = document.getElementById('saveSettings');
+        const resetSettings = document.getElementById('resetSettings');
+        const qualitySetting = document.getElementById('qualitySetting');
+        const qualityValue = document.getElementById('qualityValue');
 
-        // Update settings when dropdowns change
-        const updateSettings = () => {
-            const resolution = resolutionSelect.value;
-            if (resolution === 'default') {
-                this.videoSettings.width = 0;
-                this.videoSettings.height = 0;
-            } else {
-                const parts = resolution.split('x');
-                this.videoSettings.width = parseInt(parts[0]);
-                this.videoSettings.height = parseInt(parts[1]);
+        settingsToggle.addEventListener('click', (e) => {
+            e.stopPropagation();
+            settingsPopup.classList.add('show');
+        });
+
+        closeSettingsPopup.addEventListener('click', (e) => {
+            e.stopPropagation();
+            settingsPopup.classList.remove('show');
+        });
+
+        settingsPopup.addEventListener('click', (e) => {
+            if (e.target === settingsPopup) {
+                settingsPopup.classList.remove('show');
             }
-            this.videoSettings.framerate = parseInt(framerateSelect.value);
+        });
+
+        qualitySetting.addEventListener('input', (e) => {
+            qualityValue.textContent = e.target.value;
+        });
+
+        saveSettings.addEventListener('click', (e) => {
+            e.stopPropagation();
+            this.saveSettings();
+        });
+
+        resetSettings.addEventListener('click', (e) => {
+            e.stopPropagation();
+            this.resetSettings();
+        });
+    }
+
+    async loadSettings() {
+        try {
+            const response = await fetch('/settings');
+            if (!response.ok) {
+                console.warn('Failed to load settings');
+                return;
+            }
+
+            const settings = await response.json();
+            this.updateSettingsUI(settings);
+        } catch (err) {
+            console.error('Error loading settings:', err);
+        }
+    }
+
+    updateSettingsUI(settings) {
+        document.getElementById('qualitySetting').value = settings.quality;
+        document.getElementById('qualityValue').textContent = settings.quality;
+        document.getElementById('fpsSetting').value = settings.desiredFps || '';
+        document.getElementById('buffersSetting').value = settings.buffers;
+        document.getElementById('tcpNoDelaySetting').checked = settings.tcpNodelay;
+    }
+
+    async saveSettings() {
+        const settings = {
+            quality: parseInt(document.getElementById('qualitySetting').value),
+            desiredFps: parseInt(document.getElementById('fpsSetting').value) || 0,
+            buffers: parseInt(document.getElementById('buffersSetting').value),
+            tcpNodelay: document.getElementById('tcpNoDelaySetting').checked
         };
 
-        resolutionSelect.addEventListener('change', updateSettings);
-        framerateSelect.addEventListener('change', updateSettings);
+        try {
+            const response = await fetch('/settings/update', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify(settings)
+            });
 
-        expandToggle.addEventListener('click', (e) => {
-            e.stopPropagation();
-            this.toggleExpanded();
-        });
+            if (!response.ok) {
+                throw new Error('Failed to save settings');
+            }
 
-        closeExpand.addEventListener('click', (e) => {
-            e.stopPropagation();
-            this.toggleExpanded();
-        });
+            console.log('Settings saved successfully');
+            document.getElementById('settingsPopup').classList.remove('show');
+        } catch (err) {
+            console.error('Error saving settings:', err);
+            alert('Failed to save settings: ' + err.message);
+        }
     }
 
-    toggleExpanded() {
-        const isExpanded = this.controlArea.classList.contains('expanded');
-        const closeButton = document.getElementById('closeExpand');
-        const expandButton = document.getElementById('expandToggle');
+    async resetSettings() {
+        const defaultSettings = {
+            quality: 80,
+            desiredFps: 30,
+            buffers: 5,
+            tcpNodelay: false
+        };
 
-        if (isExpanded) {
-            this.controlArea.classList.remove('expanded');
-            expandButton.classList.remove('expanded');
-            expandButton.title = 'Expand video to viewport';
-            expandButton.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M8 3H5a2 2 0 0 0-2 2v3"/><path d="M21 8V5a2 2 0 0 0-2-2h-3"/><path d="M3 16v3a2 2 0 0 0 2 2h3"/><path d="M16 21h3a2 2 0 0 0 2-2v-3"/></svg>';
-            closeButton.style.display = 'none';
+        this.updateSettingsUI(defaultSettings);
+
+        try {
+            const response = await fetch('/settings/update', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify(defaultSettings)
+            });
+
+            if (!response.ok) {
+                throw new Error('Failed to reset settings');
+            }
+
+            console.log('Settings reset to defaults');
+        } catch (err) {
+            console.error('Error resetting settings:', err);
+            alert('Failed to reset settings: ' + err.message);
+        }
+    }
+
+    updateControlButtons() {
+        const playControl = document.getElementById('playControl');
+        const stopControl = document.getElementById('stopControl');
+
+        if (this.isActive || this.mjpegFeed.src) {
+            playControl.disabled = true;
+            stopControl.disabled = false;
         } else {
-            this.controlArea.classList.add('expanded');
-            expandButton.classList.add('expanded');
-            expandButton.title = 'Restore video size';
-            expandButton.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M8 3v3a2 2 0 0 1-2 2H3"/><path d="M21 8h-3a2 2 0 0 1-2-2V3"/><path d="M3 16h3a2 2 0 0 1 2 2v3"/><path d="M16 21v-3a2 2 0 0 1 2-2h3"/></svg>';
-            closeButton.style.display = 'flex';
+            playControl.disabled = false;
+            stopControl.disabled = true;
         }
     }
 
@@ -183,27 +276,105 @@ class KindaVMClient {
     }
 
     setupKeyboardShortcuts() {
-        const shortcuts = [
-            { id: 'ctrlW', event: 'ctrl_w' },
-            { id: 'ctrlT', event: 'ctrl_t' },
-            { id: 'ctrlN', event: 'ctrl_n' },
-            { id: 'ctrlQ', event: 'ctrl_q' },
-            { id: 'ctrlTab', event: 'ctrl_tab' },
-            { id: 'ctrlShiftTab', event: 'ctrl_shift_tab' },
-            { id: 'ctrlShiftT', event: 'ctrl_shift_t' },
-            { id: 'ctrlF4', event: 'ctrl_f4' },
-            { id: 'altF4', event: 'alt_f4' },
-            { id: 'f11', event: 'f11' }
-        ];
+        const sendButton = document.getElementById('sendKeyCombo');
+        const keyInput = document.getElementById('keyInput');
+        const specialKeySelect = document.getElementById('specialKeySelect');
 
-        shortcuts.forEach(shortcut => {
-            const button = document.getElementById(shortcut.id);
-            if (button) {
-                button.addEventListener('click', (e) => {
-                    e.stopPropagation();
-                    this.sendSystemEvent(shortcut.event);
-                });
+        // Clear the other input when one is used
+        keyInput.addEventListener('input', () => {
+            if (keyInput.value) {
+                specialKeySelect.value = '';
             }
+        });
+
+        specialKeySelect.addEventListener('change', () => {
+            if (specialKeySelect.value) {
+                keyInput.value = '';
+            }
+        });
+
+        sendButton.addEventListener('click', (e) => {
+            e.stopPropagation();
+            this.sendKeyCombo();
+        });
+
+        // Allow Enter to send the combo
+        keyInput.addEventListener('keydown', (e) => {
+            if (e.key === 'Enter') {
+                e.preventDefault();
+                this.sendKeyCombo();
+            }
+        });
+    }
+
+    sendKeyCombo() {
+        const keyInput = document.getElementById('keyInput');
+        const specialKeySelect = document.getElementById('specialKeySelect');
+        const modCtrl = document.getElementById('modCtrl').checked;
+        const modShift = document.getElementById('modShift').checked;
+        const modAlt = document.getElementById('modAlt').checked;
+        const modMeta = document.getElementById('modMeta').checked;
+
+        // Determine which key to send
+        let keyCode = '';
+
+        if (keyInput.value) {
+            // Regular key input (a-z, 0-9)
+            const char = keyInput.value.toLowerCase();
+            if (char >= 'a' && char <= 'z') {
+                keyCode = 'Key' + char.toUpperCase();
+            } else if (char >= '0' && char <= '9') {
+                keyCode = 'Digit' + char;
+            } else {
+                console.warn('Invalid key input:', keyInput.value);
+                return;
+            }
+        } else if (specialKeySelect.value) {
+            // Special key from dropdown
+            keyCode = specialKeySelect.value;
+        } else {
+            console.warn('No key selected');
+            return;
+        }
+
+        // Build modifiers array
+        const modifiers = [];
+        if (modCtrl) modifiers.push('ctrl');
+        if (modShift) modifiers.push('shift');
+        if (modAlt) modifiers.push('alt');
+        if (modMeta) modifiers.push('meta');
+
+        // Send keydown and keyup events
+        this.sendComboEvent('keydown', keyCode, modifiers);
+        setTimeout(() => {
+            this.sendComboEvent('keyup', keyCode, modifiers);
+        }, 50);
+    }
+
+    sendComboEvent(eventType, keyCode, modifiers) {
+        if (!this.ws || this.ws.readyState !== WebSocket.OPEN) {
+            console.warn('WebSocket not connected, connecting now...');
+            this.connect();
+
+            const waitForConnection = () => {
+                if (this.ws && this.ws.readyState === WebSocket.OPEN) {
+                    this.sendEvent({
+                        type: eventType,
+                        code: keyCode,
+                        modifiers: modifiers
+                    });
+                } else {
+                    setTimeout(waitForConnection, 100);
+                }
+            };
+            setTimeout(waitForConnection, 100);
+            return;
+        }
+
+        this.sendEvent({
+            type: eventType,
+            code: keyCode,
+            modifiers: modifiers
         });
     }
 
@@ -253,17 +424,12 @@ class KindaVMClient {
                 this.isActive = true;
                 this.controlArea.classList.add('active');
                 this.connect();
+                this.updateControlButtons();
             } else {
                 this.isActive = false;
                 this.controlArea.classList.remove('active');
                 this.releaseAllKeys();
-                this.stopVideoStream();
-                this.disconnect();
-
-                // Exit expanded mode when ESC is pressed
-                if (this.controlArea.classList.contains('expanded')) {
-                    this.toggleExpanded();
-                }
+                this.updateControlButtons();
             }
         });
 
@@ -293,48 +459,61 @@ class KindaVMClient {
     }
 
     async startVideoStream() {
-        if (this.h264Player) {
+        if (!this.ustreamerAddr) {
+            console.error('ustreamer address not configured');
             return;
         }
 
-        const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
-        const params = new URLSearchParams({
-            width: this.videoSettings.width,
-            height: this.videoSettings.height,
-            framerate: this.videoSettings.framerate
-        });
-        const h264Url = `${protocol}//${window.location.host}/video-stream?${params}`;
-
         try {
-            this.h264Player = new H264Player(this.videoFeed, h264Url);
-            const started = await this.h264Player.start();
-
-            if (started) {
-                console.log(`H264 streaming started (${this.videoSettings.width}x${this.videoSettings.height} @ ${this.videoSettings.framerate}fps)`);
-                this.videoFeed.style.display = 'block';
-                this.placeholder.style.display = 'none';
-
-                this.videoFeed.addEventListener('loadedmetadata', () => {
-                    console.log('H264 video metadata loaded');
-                });
-
-                this.videoFeed.addEventListener('error', (e) => {
-                    console.error('H264 video error:', e);
-                });
+            // Start ustreamer on the server
+            const response = await fetch('/video/start', { method: 'POST' });
+            if (!response.ok) {
+                throw new Error('Failed to start video stream');
             }
+
+            // Give ustreamer a moment to start
+            await new Promise(resolve => setTimeout(resolve, 500));
+
+            // Parse host:port and build URL
+            const [host, port] = this.ustreamerAddr.split(':');
+            const ustreamerUrl = `http://${host}:${port}/stream`;
+            this.mjpegFeed.src = ustreamerUrl;
+            this.mjpegFeed.style.display = 'block';
+            this.placeholder.style.display = 'none';
+            this.updateControlButtons();
+            console.log(`MJPEG streaming started from ustreamer: ${ustreamerUrl}`);
         } catch (err) {
-            console.error('Failed to start H264 stream:', err);
+            console.error('Failed to start MJPEG stream:', err);
         }
     }
 
-    stopVideoStream() {
-        if (this.h264Player) {
-            this.h264Player.stop();
-            this.h264Player = null;
-            this.videoFeed.style.display = 'none';
-            this.placeholder.style.display = 'flex';
-            console.log('H264 streaming stopped');
+    async stopVideoStream() {
+        this.mjpegFeed.src = '';
+        this.mjpegFeed.style.display = 'none';
+        this.placeholder.style.display = 'flex';
+
+        try {
+            // Stop ustreamer on the server
+            const response = await fetch('/video/stop', { method: 'POST' });
+            if (!response.ok) {
+                console.warn('Failed to stop video stream on server');
+            }
+            this.updateControlButtons();
+            console.log('MJPEG streaming stopped');
+        } catch (err) {
+            console.error('Error stopping video stream:', err);
         }
+    }
+
+    stopControl() {
+        // Exit pointer lock if active
+        if (document.pointerLockElement === this.controlArea) {
+            document.exitPointerLock();
+        }
+
+        // Stop video and disconnect
+        this.stopVideoStream();
+        this.disconnect();
     }
 
     handleKeyDown(e) {

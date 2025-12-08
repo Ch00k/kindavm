@@ -1,10 +1,11 @@
 [Unit]
-Description=KindaVM HID Gadget Initialization
+Description=KindaVM Initialization
 After=local-fs.target sys-kernel-config.mount
 
 [Service]
 Type=oneshot
 ExecStart=/usr/local/bin/kindavm-init-hid.sh
+ExecStart=/usr/local/bin/kindavm-init-hdmi.sh
 RemainAfterExit=yes
 
 [Install]

@@ -10,55 +10,33 @@
     <div class="header">
         <h1>KindaVM</h1>
         <div class="hostname" id="hostname"></div>
+        <div class="header-controls">
+            <button id="playControl" class="header-button play-button" title="Start video and capture control">
+                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-play-icon lucide-play"><path d="M5 5a2 2 0 0 1 3.008-1.728l11.997 6.998a2 2 0 0 1 .003 3.458l-12 7A2 2 0 0 1 5 19z"/></svg>
+            </button>
+            <button id="stopControl" class="header-button stop-button" title="Stop video and release control" disabled>
+                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-square-icon lucide-square"><rect width="18" height="18" x="3" y="3" rx="2"/></svg>
+            </button>
+            <button id="keyboardToggle" class="header-button keyboard-button" title="Show keyboard controls">
+                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-keyboard-icon lucide-keyboard"><path d="M10 8h.01"/><path d="M12 12h.01"/><path d="M14 8h.01"/><path d="M16 12h.01"/><path d="M18 8h.01"/><path d="M6 8h.01"/><path d="M7 16h10"/><path d="M8 12h.01"/><rect width="20" height="16" x="2" y="4" rx="2"/></svg>
+            </button>
+            <button id="settingsToggle" class="header-button settings-button" title="Video settings">
+                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-settings-icon lucide-settings"><path d="M9.671 4.136a2.34 2.34 0 0 1 4.659 0 2.34 2.34 0 0 0 3.319 1.915 2.34 2.34 0 0 1 2.33 4.033 2.34 2.34 0 0 0 0 3.831 2.34 2.34 0 0 1-2.33 4.033 2.34 2.34 0 0 0-3.319 1.915 2.34 2.34 0 0 1-4.659 0 2.34 2.34 0 0 0-3.32-1.915 2.34 2.34 0 0 1-2.33-4.033 2.34 2.34 0 0 0 0-3.831A2.34 2.34 0 0 1 6.35 6.051a2.34 2.34 0 0 0 3.319-1.915"/><circle cx="12" cy="12" r="3"/></svg>
+            </button>
+        </div>
     </div>
 
-    <div class="main-layout">
-        <div class="video-area">
-            <div class="control-area" id="controlArea">
-                <button id="closeExpand" class="close-expand-button" style="display: none;" title="Exit expanded view">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M8 3v3a2 2 0 0 1-2 2H3"/><path d="M21 8h-3a2 2 0 0 1-2-2V3"/><path d="M3 16h3a2 2 0 0 1 2 2v3"/><path d="M16 21v-3a2 2 0 0 1 2-2h3"/></svg>
+    <div class="keyboard-popup" id="keyboardPopup">
+        <div class="popup-content">
+            <div class="popup-header">
+                <h3>Keyboard Controls</h3>
+                <button id="closePopup" class="close-popup-button" title="Close">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
                 </button>
-                <button id="expandToggle" class="expand-button" title="Expand video to viewport">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M8 3H5a2 2 0 0 0-2 2v3"/><path d="M21 8V5a2 2 0 0 0-2-2h-3"/><path d="M3 16v3a2 2 0 0 0 2 2h3"/><path d="M16 21h3a2 2 0 0 0 2-2v-3"/></svg>
-                </button>
-                <video id="videoFeed" autoplay muted playsinline style="display: none;"></video>
-                <div class="placeholder" id="placeholder">
-                    <div class="placeholder-content">
-                        <h2>Click to Start Controlling</h2>
-                        <p>Click inside this area to capture keyboard and mouse input and start video stream</p>
-                        <p class="help-text">Press ESC to release control and stop video stream</p>
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        <div class="sidebar">
-            <div class="video-controls">
-                <h3>Video Settings</h3>
-                <div class="control-group">
-                    <label for="resolution">Resolution:</label>
-                    <select id="resolution">
-                        <option value="default" selected>Default (camera native)</option>
-                        <option value="640x480">640x480</option>
-                        <option value="800x600">800x600</option>
-                        <option value="1024x768">1024x768</option>
-                        <option value="1280x720">1280x720</option>
-                        <option value="1920x1080">1920x1080</option>
-                    </select>
-                </div>
-                <div class="control-group">
-                    <label for="framerate">Framerate:</label>
-                    <select id="framerate">
-                        <option value="15">15 fps</option>
-                        <option value="24">24 fps</option>
-                        <option value="30" selected>30 fps</option>
-                        <option value="60">60 fps</option>
-                    </select>
-                </div>
             </div>
 
             <div class="system-controls">
-                <h3>System Controls</h3>
+                <h4>System Controls</h4>
                 <div class="control-buttons">
                     <div class="control-button-group">
                         <label>Brightness:</label>
@@ -86,45 +64,125 @@
             </div>
 
             <div class="keyboard-shortcuts">
-                <h3>Keyboard Shortcuts</h3>
-                <div class="shortcuts-grid">
-                    <button id="ctrlW" class="shortcut-button" title="Send Ctrl-W">
-                        <span class="key">Ctrl</span>+<span class="key">W</span>
-                    </button>
-                    <button id="ctrlT" class="shortcut-button" title="Send Ctrl-T">
-                        <span class="key">Ctrl</span>+<span class="key">T</span>
-                    </button>
-                    <button id="ctrlN" class="shortcut-button" title="Send Ctrl-N">
-                        <span class="key">Ctrl</span>+<span class="key">N</span>
-                    </button>
-                    <button id="ctrlQ" class="shortcut-button" title="Send Ctrl-Q">
-                        <span class="key">Ctrl</span>+<span class="key">Q</span>
-                    </button>
-                    <button id="ctrlTab" class="shortcut-button" title="Send Ctrl-Tab">
-                        <span class="key">Ctrl</span>+<span class="key">Tab</span>
-                    </button>
-                    <button id="ctrlShiftTab" class="shortcut-button" title="Send Ctrl-Shift-Tab">
-                        <span class="key">Ctrl</span>+<span class="key">Shift</span>+<span class="key">Tab</span>
-                    </button>
-                    <button id="ctrlShiftT" class="shortcut-button" title="Send Ctrl-Shift-T">
-                        <span class="key">Ctrl</span>+<span class="key">Shift</span>+<span class="key">T</span>
-                    </button>
-                    <button id="ctrlF4" class="shortcut-button" title="Send Ctrl-F4">
-                        <span class="key">Ctrl</span>+<span class="key">F4</span>
-                    </button>
-                    <button id="altF4" class="shortcut-button" title="Send Alt-F4">
-                        <span class="key">Alt</span>+<span class="key">F4</span>
-                    </button>
-                    <button id="f11" class="shortcut-button" title="Send F11">
-                        <span class="key">F11</span>
-                    </button>
+                <h4>Send Key Combination</h4>
+                <div class="shortcut-composer">
+                    <div class="modifier-checkboxes">
+                        <label><input type="checkbox" id="modCtrl"> Ctrl</label>
+                        <label><input type="checkbox" id="modShift"> Shift</label>
+                        <label><input type="checkbox" id="modAlt"> Alt</label>
+                        <label><input type="checkbox" id="modMeta"> Meta/Cmd</label>
+                    </div>
+                    <div class="key-input-row">
+                        <div class="key-input-group">
+                            <label>Key:</label>
+                            <input type="text" id="keyInput" maxlength="1" placeholder="a-z, 0-9" title="Enter a single character">
+                        </div>
+                        <span class="or-separator">or</span>
+                        <div class="key-input-group">
+                            <label>Special Key:</label>
+                            <select id="specialKeySelect">
+                                <option value="">None</option>
+                                <option value="F1">F1</option>
+                                <option value="F2">F2</option>
+                                <option value="F3">F3</option>
+                                <option value="F4">F4</option>
+                                <option value="F5">F5</option>
+                                <option value="F6">F6</option>
+                                <option value="F7">F7</option>
+                                <option value="F8">F8</option>
+                                <option value="F9">F9</option>
+                                <option value="F10">F10</option>
+                                <option value="F11">F11</option>
+                                <option value="F12">F12</option>
+                                <option value="Tab">Tab</option>
+                                <option value="Enter">Enter</option>
+                                <option value="Escape">Escape</option>
+                                <option value="Backspace">Backspace</option>
+                                <option value="Delete">Delete</option>
+                                <option value="Insert">Insert</option>
+                                <option value="Home">Home</option>
+                                <option value="End">End</option>
+                                <option value="PageUp">Page Up</option>
+                                <option value="PageDown">Page Down</option>
+                                <option value="ArrowUp">Arrow Up</option>
+                                <option value="ArrowDown">Arrow Down</option>
+                                <option value="ArrowLeft">Arrow Left</option>
+                                <option value="ArrowRight">Arrow Right</option>
+                            </select>
+                        </div>
+                    </div>
+                    <button id="sendKeyCombo" class="send-combo-button">Send</button>
                 </div>
             </div>
         </div>
     </div>
 
-    <script src="jmuxer.min.js"></script>
-    <script src="h264-player.js"></script>
+    <div class="keyboard-popup" id="settingsPopup">
+        <div class="popup-content">
+            <div class="popup-header">
+                <h3>Video Settings</h3>
+                <button id="closeSettingsPopup" class="close-popup-button" title="Close">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+                </button>
+            </div>
+
+            <div class="settings-form">
+                <div class="setting-group">
+                    <label for="qualitySetting">Quality (1-100):</label>
+                    <div class="input-with-value">
+                        <input type="range" id="qualitySetting" min="1" max="100" value="80">
+                        <span id="qualityValue">80</span>
+                    </div>
+                    <p class="setting-help">Higher quality = better image, more bandwidth</p>
+                </div>
+
+                <div class="setting-group">
+                    <label for="fpsSetting">Desired FPS:</label>
+                    <div class="input-with-value">
+                        <input type="number" id="fpsSetting" min="1" max="60" value="30" placeholder="30">
+                    </div>
+                    <p class="setting-help">Leave empty for maximum FPS. Lower FPS reduces latency.</p>
+                </div>
+
+                <div class="setting-group">
+                    <label for="buffersSetting">Buffers (2-10):</label>
+                    <div class="input-with-value">
+                        <input type="number" id="buffersSetting" min="2" max="10" value="5">
+                    </div>
+                    <p class="setting-help">Lower buffers reduce latency but may cause frame drops</p>
+                </div>
+
+                <div class="setting-group">
+                    <label>
+                        <input type="checkbox" id="tcpNoDelaySetting">
+                        Enable TCP_NODELAY
+                    </label>
+                    <p class="setting-help">Disables buffering for lower network latency</p>
+                </div>
+
+                <div class="settings-actions">
+                    <button id="saveSettings" class="save-settings-button">Save Settings</button>
+                    <button id="resetSettings" class="reset-settings-button">Reset to Defaults</button>
+                </div>
+                <p class="setting-note">Note: Video must be restarted for changes to take effect</p>
+            </div>
+        </div>
+    </div>
+
+    <div class="main-layout">
+        <div class="control-area" id="controlArea">
+            <img id="mjpegFeed" style="display: none; width: 100%; height: 100%; object-fit: contain;" />
+            <div class="placeholder" id="placeholder">
+                <div class="placeholder-content">
+                    <h2>Click to Start Controlling</h2>
+                    <p>Click inside this area to capture keyboard and mouse input and start video stream</p>
+                    <p class="help-text">Press ESC to release mouse/keyboard (video continues)</p>
+                    <p class="help-text">Click Stop button to fully stop</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <script src="app.js"></script>
 </body>
 </html>

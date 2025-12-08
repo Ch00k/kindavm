@@ -1,0 +1,13 @@
+[Unit]
+Description=KindaVM Daemon
+After=network.target kindavm-init.service
+Requires=kindavm-init.service
+
+[Service]
+Type=simple
+ExecStart=/usr/local/bin/kindavmd
+Restart=on-failure
+RestartSec=5s
+
+[Install]
+WantedBy=multi-user.target
