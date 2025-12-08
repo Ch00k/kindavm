@@ -1,6 +1,7 @@
 [Unit]
 Description=KindaVM Initialization
-After=local-fs.target sys-kernel-config.mount
+After=sys-kernel-config.mount systemd-modules-load.service
+Requires=sys-kernel-config.mount systemd-modules-load.service
 
 [Service]
 Type=oneshot
