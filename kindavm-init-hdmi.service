@@ -1,12 +1,12 @@
 [Unit]
-Description=KindaVM Initialization
+Description=KindaVM HDMI Initialization
 After=sys-kernel-config.mount systemd-modules-load.service multi-user.target
 Requires=sys-kernel-config.mount systemd-modules-load.service
 
 [Service]
 Type=oneshot
-ExecStart=/usr/local/bin/kindavm-init-hid.sh
-ExecStart=/usr/local/bin/kindavm-init-hdmi.sh
+ExecStart=/usr/bin/v4l2-ctl --device=/dev/video0 --set-edid=file=/usr/local/lib/kindavm/edid.hex --info-edid
+ExecStop=/usr/bin/v4l2-ctl --device=/dev/video0 --clear-edid
 RemainAfterExit=yes
 
 [Install]

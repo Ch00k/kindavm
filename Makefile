@@ -44,7 +44,8 @@ package: build
 	@cp init_hid.sh $(KINDAVMD_BUILD_ARTIFACTS_DIR)/package/
 	@cp init_hdmi.sh $(KINDAVMD_BUILD_ARTIFACTS_DIR)/package/
 	@cp uninstall.sh $(KINDAVMD_BUILD_ARTIFACTS_DIR)/package/
-	@cp kindavm-init.service $(KINDAVMD_BUILD_ARTIFACTS_DIR)/package/
+	@cp kindavm-init-hid.service $(KINDAVMD_BUILD_ARTIFACTS_DIR)/package/
+	@cp kindavm-init-hdmi.service $(KINDAVMD_BUILD_ARTIFACTS_DIR)/package/
 	@cp kindavmd.service $(KINDAVMD_BUILD_ARTIFACTS_DIR)/package/
 	@cp tools/edidmod $(KINDAVMD_BUILD_ARTIFACTS_DIR)/package/
 	@cp tools/ustreamer $(KINDAVMD_BUILD_ARTIFACTS_DIR)/package/

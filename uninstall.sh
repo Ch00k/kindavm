@@ -16,8 +16,18 @@ if systemctl is-active --quiet kindavmd.service; then
     systemctl stop kindavmd.service
 fi
 
+if systemctl is-active --quiet kindavm-init-hid.service; then
+    echo "Stopping kindavm-init-hid service..."
+    systemctl stop kindavm-init-hid.service
+fi
+
+if systemctl is-active --quiet kindavm-init-hdmi.service; then
+    echo "Stopping kindavm-init-hdmi service..."
+    systemctl stop kindavm-init-hdmi.service
+fi
+
 if systemctl is-active --quiet kindavm-init.service; then
-    echo "Stopping kindavm-init service..."
+    echo "Stopping kindavm-init service (legacy)..."
     systemctl stop kindavm-init.service
 fi
 
@@ -26,8 +36,18 @@ if systemctl is-enabled --quiet kindavmd.service 2>/dev/null; then
     systemctl disable kindavmd.service
 fi
 
+if systemctl is-enabled --quiet kindavm-init-hid.service 2>/dev/null; then
+    echo "Disabling kindavm-init-hid service..."
+    systemctl disable kindavm-init-hid.service
+fi
+
+if systemctl is-enabled --quiet kindavm-init-hdmi.service 2>/dev/null; then
+    echo "Disabling kindavm-init-hdmi service..."
+    systemctl disable kindavm-init-hdmi.service
+fi
+
 if systemctl is-enabled --quiet kindavm-init.service 2>/dev/null; then
-    echo "Disabling kindavm-init service..."
+    echo "Disabling kindavm-init service (legacy)..."
     systemctl disable kindavm-init.service
 fi
 
@@ -37,8 +57,18 @@ if [ -f /etc/systemd/system/kindavmd.service ]; then
     rm -f /etc/systemd/system/kindavmd.service
 fi
 
+if [ -f /etc/systemd/system/kindavm-init-hid.service ]; then
+    echo "Removing kindavm-init-hid service file..."
+    rm -f /etc/systemd/system/kindavm-init-hid.service
+fi
+
+if [ -f /etc/systemd/system/kindavm-init-hdmi.service ]; then
+    echo "Removing kindavm-init-hdmi service file..."
+    rm -f /etc/systemd/system/kindavm-init-hdmi.service
+fi
+
 if [ -f /etc/systemd/system/kindavm-init.service ]; then
-    echo "Removing kindavm-init service file..."
+    echo "Removing kindavm-init service file (legacy)..."
     rm -f /etc/systemd/system/kindavm-init.service
 fi
 

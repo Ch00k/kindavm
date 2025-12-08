@@ -1,7 +1,7 @@
 [Unit]
 Description=KindaVM Daemon
-After=network.target kindavm-init.service
-Requires=kindavm-init.service
+After=network.target kindavm-init-hid.service kindavm-init-hdmi.service
+Requires=kindavm-init-hid.service kindavm-init-hdmi.service
 
 [Service]
 Type=simple

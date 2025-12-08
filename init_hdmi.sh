@@ -14,7 +14,7 @@ V4L2_CTL=/usr/bin/v4l2-ctl
 EDID_FILE="/usr/local/lib/kindavm/edid.hex"
 
 log "Setting EDID from $EDID_FILE"
-$V4L2_CTL -d $DEVICE --set-edid=file=$EDID_FILE
+$V4L2_CTL -d $DEVICE --set-edid=file=$EDID_FILE --info-edid
 
 sleep 3
 log "Querying DV timings"

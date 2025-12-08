@@ -1,0 +1,12 @@
+[Unit]
+Description=KindaVM HID Initialization
+After=sys-kernel-config.mount systemd-modules-load.service multi-user.target
+Requires=sys-kernel-config.mount systemd-modules-load.service
+
+[Service]
+Type=oneshot
+ExecStart=/usr/local/bin/kindavm-init-hid.sh
+RemainAfterExit=yes
+
+[Install]
+WantedBy=multi-user.target

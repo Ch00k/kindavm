@@ -55,7 +55,9 @@ fi
 if [ "$UPGRADE_MODE" = true ]; then
     echo "Stopping services..."
     sudo systemctl stop kindavmd.service || true
-    sudo systemctl stop kindavm-init.service || true
+    sudo systemctl stop kindavm-init-hid.service || true
+    sudo systemctl stop kindavm-init-hdmi.service || true
+    sudo systemctl stop kindavm-init.service || true  # Legacy service
 fi
 
 # Download and extract release archive
@@ -136,10 +138,13 @@ sudo chmod +x /usr/local/bin/kindavm-uninstall.sh
 
 # Install systemd services
 echo "Installing systemd services..."
-sudo cp kindavm-init.service /etc/systemd/system/
+sudo cp kindavm-init-hid.service /etc/systemd/system/
+sudo cp kindavm-init-hdmi.service /etc/systemd/system/
 sudo cp kindavmd.service /etc/systemd/system/
 sudo systemctl daemon-reload
-sudo systemctl enable kindavm-init.service
+sudo systemctl disable kindavm-init.service 2>/dev/null || true  # Disable legacy service
+sudo systemctl enable kindavm-init-hid.service
+sudo systemctl enable kindavm-init-hdmi.service
 sudo systemctl enable kindavmd.service
 
 # Cleanup
@@ -160,7 +165,8 @@ if [ "$NEEDS_REBOOT" = true ]; then
 else
     echo "USB gadget support is already enabled."
     echo "Services will start on next boot, or you can start them now:"
-    echo "  sudo systemctl start kindavm-init.service"
+    echo "  sudo systemctl start kindavm-init-hid.service"
+    echo "  sudo systemctl start kindavm-init-hdmi.service"
     echo "  sudo systemctl start kindavmd.service"
     echo ""
 fi
