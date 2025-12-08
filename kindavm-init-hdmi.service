@@ -1,7 +1,8 @@
 [Unit]
 Description=KindaVM HDMI Initialization
-After=sys-kernel-config.mount systemd-modules-load.service multi-user.target
+After=sys-kernel-config.mount systemd-modules-load.service
 Requires=sys-kernel-config.mount systemd-modules-load.service
+Before=multi-user.target
 
 [Service]
 Type=oneshot

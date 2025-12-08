@@ -57,7 +57,6 @@ if [ "$UPGRADE_MODE" = true ]; then
     sudo systemctl stop kindavmd.service || true
     sudo systemctl stop kindavm-init-hid.service || true
     sudo systemctl stop kindavm-init-hdmi.service || true
-    sudo systemctl stop kindavm-init.service || true  # Legacy service
 fi
 
 # Download and extract release archive
