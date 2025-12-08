@@ -9,6 +9,8 @@ log() {
 
 log "Starting KindaVM HID gadget initialization"
 
+sleep 3
+
 # ConfigFS paths for USB gadget configuration
 USB_GADGET_DIR=/sys/kernel/config/usb_gadget
 HID_GADGET_DIR=${USB_GADGET_DIR}/kindavm
@@ -18,19 +20,6 @@ HID_CONFIG_STRINGS_DIR=${HID_CONFIGS_DIR}/strings/0x409
 HID_FUNCTIONS_DIR=${HID_GADGET_DIR}/functions/hid.usb0
 HID_FUNCTIONS_LINK=${HID_CONFIGS_DIR}/hid.usb0
 HID_UDC_FILE=${HID_GADGET_DIR}/UDC
-
-# Unbind gadget from UDC if already bound
-# This allows us to reconfigure the gadget
-if [ -f ${HID_UDC_FILE} ]; then
-    log "Unbinding existing gadget from UDC"
-    echo "" >${HID_UDC_FILE} 2>/dev/null || true
-fi
-
-# Remove existing gadget configuration to ensure clean state
-if [ -d ${HID_GADGET_DIR} ]; then
-    log "Removing existing gadget configuration"
-    rm -rf ${HID_GADGET_DIR}
-fi
 
 # Create directory structure for gadget configuration
 log "Creating gadget directory structure"
@@ -73,117 +62,7 @@ echo 9 >${HID_FUNCTIONS_DIR}/report_length # Max report size (keyboard = 9 bytes
 #   Report ID 3: System Control (power, sleep, wake)
 #   Report ID 4: Mouse (buttons, X, Y, wheel)
 log "Writing HID report descriptor"
-/usr/bin/printf '%b' \
-    '\x05\x01' \
-    '\x09\x06' \
-    '\xa1\x01' \
-    '\x85\x01' \
-    '\x05\x07' \
-    '\x19\xe0' \
-    '\x29\xe7' \
-    '\x15\x00' \
-    '\x25\x01' \
-    '\x75\x01' \
-    '\x95\x08' \
-    '\x81\x02' \
-    '\x95\x01' \
-    '\x75\x08' \
-    '\x81\x03' \
-    '\x95\x05' \
-    '\x75\x01' \
-    '\x05\x08' \
-    '\x19\x01' \
-    '\x29\x05' \
-    '\x91\x02' \
-    '\x95\x01' \
-    '\x75\x03' \
-    '\x91\x03' \
-    '\x95\x06' \
-    '\x75\x08' \
-    '\x15\x00' \
-    '\x25\x65' \
-    '\x05\x07' \
-    '\x19\x00' \
-    '\x29\x65' \
-    '\x81\x00' \
-    '\xc0' \
-    '\x05\x0c' \
-    '\x09\x01' \
-    '\xa1\x01' \
-    '\x85\x02' \
-    '\x15\x00' \
-    '\x25\x01' \
-    '\x75\x01' \
-    '\x95\x08' \
-    '\x09\xe9' \
-    '\x09\xea' \
-    '\x09\xe2' \
-    '\x09\xcd' \
-    '\x09\xb5' \
-    '\x09\xb6' \
-    '\x09\xb7' \
-    '\x0a\x8a\x01' \
-    '\x81\x02' \
-    '\x95\x08' \
-    '\x09\x6f' \
-    '\x09\x70' \
-    '\x0a\x21\x02' \
-    '\x0a\x23\x02' \
-    '\x0a\x24\x02' \
-    '\x0a\x25\x02' \
-    '\x0a\x26\x02' \
-    '\x0a\x27\x02' \
-    '\x81\x02' \
-    '\x95\x01' \
-    '\x09\xb8' \
-    '\x81\x02' \
-    '\x95\x07' \
-    '\x81\x03' \
-    '\xc0' \
-    '\x05\x01' \
-    '\x09\x80' \
-    '\xa1\x01' \
-    '\x85\x03' \
-    '\x15\x00' \
-    '\x25\x01' \
-    '\x75\x01' \
-    '\x95\x03' \
-    '\x09\x81' \
-    '\x09\x82' \
-    '\x09\x83' \
-    '\x81\x02' \
-    '\x95\x05' \
-    '\x81\x03' \
-    '\xc0' \
-    '\x05\x01' \
-    '\x09\x02' \
-    '\xa1\x01' \
-    '\x85\x04' \
-    '\x09\x01' \
-    '\xa1\x00' \
-    '\x05\x09' \
-    '\x19\x01' \
-    '\x29\x03' \
-    '\x15\x00' \
-    '\x25\x01' \
-    '\x95\x03' \
-    '\x75\x01' \
-    '\x81\x02' \
-    '\x95\x01' \
-    '\x75\x05' \
-    '\x81\x03' \
-    '\x05\x01' \
-    '\x09\x30' \
-    '\x09\x31' \
-    '\x09\x38' \
-    '\x15\x81' \
-    '\x25\x7f' \
-    '\x75\x08' \
-    '\x95\x03' \
-    '\x81\x06' \
-    '\xc0' \
-    '\xc0' \
-    >${HID_FUNCTIONS_DIR}/report_desc
+cat /usr/local/lib/kindavm/hid_report_desc.bin >${HID_FUNCTIONS_DIR}/report_desc
 
 # Link the HID function to the configuration
 # This associates the HID function with configuration 1

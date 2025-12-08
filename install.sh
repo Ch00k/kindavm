@@ -127,6 +127,9 @@ echo "Installing HDMI EDID file..."
 sudo mkdir -p /usr/local/lib/kindavm
 sudo cp configs/edid.hex /usr/local/lib/kindavm/edid.hex
 
+echo "Installing HID report descriptor..."
+sudo cp configs/hid_report_desc.bin /usr/local/lib/kindavm/hid_report_desc.bin
+
 echo "Installing uninstall script..."
 sudo cp uninstall.sh /usr/local/bin/kindavm-uninstall.sh
 sudo chmod +x /usr/local/bin/kindavm-uninstall.sh
