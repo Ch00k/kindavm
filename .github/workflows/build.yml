@@ -12,7 +12,6 @@ on:
 
 env:
   GO_VERSION: 1.25.x
-  KINDAVMD_BUILD_ARTIFACTS_DIR: dist
 
 jobs:
   lint:
@@ -74,12 +73,9 @@ jobs:
           VERSION=${GITHUB_REF#refs/tags/}
           echo "version=$VERSION" >> $GITHUB_OUTPUT
 
-      - name: Build ARM64 binary
+      - name: Build package
         env:
           KINDAVMD_VERSION: ${{ steps.version.outputs.version }}
-        run: make build
-
-      - name: Create release package
         run: make package
 
       - name: Create GitHub Release
