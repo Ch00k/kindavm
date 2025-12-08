@@ -8,7 +8,7 @@ class KindaVMClient {
         this.placeholder = document.getElementById('placeholder');
         this.isActive = false;
         this.pressedKeys = new Set();
-        this.ustreamerAddr = null; // Will be loaded from server config
+        this.ustreamerPort = null; // Will be loaded from server config
 
         this.init();
     }
@@ -50,9 +50,9 @@ class KindaVMClient {
             }
 
             const data = await response.json();
-            if (data.ustreamerAddr) {
-                this.ustreamerAddr = data.ustreamerAddr;
-                console.log('ustreamer address:', this.ustreamerAddr);
+            if (data.ustreamerPort) {
+                this.ustreamerPort = data.ustreamerPort;
+                console.log('ustreamer port:', this.ustreamerPort);
             }
         } catch (err) {
             console.error('Error loading config:', err);
@@ -459,8 +459,8 @@ class KindaVMClient {
     }
 
     async startVideoStream() {
-        if (!this.ustreamerAddr) {
-            console.error('ustreamer address not configured');
+        if (!this.ustreamerPort) {
+            console.error('ustreamer port not configured');
             return;
         }
 
@@ -474,9 +474,8 @@ class KindaVMClient {
             // Give ustreamer a moment to start
             await new Promise(resolve => setTimeout(resolve, 500));
 
-            // Parse host:port and build URL
-            const [host, port] = this.ustreamerAddr.split(':');
-            const ustreamerUrl = `http://${host}:${port}/stream`;
+            // Build URL using current hostname and configured port
+            const ustreamerUrl = `http://${window.location.hostname}:${this.ustreamerPort}/stream`;
             this.mjpegFeed.src = ustreamerUrl;
             this.mjpegFeed.style.display = 'block';
             this.placeholder.style.display = 'none';

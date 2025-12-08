@@ -133,8 +133,14 @@ func (s *Server) handleHostname(w http.ResponseWriter, _ *http.Request) {
 // handleConfig returns the client configuration as JSON
 func (s *Server) handleConfig(w http.ResponseWriter, _ *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
+	_, ustreamerPort, err := net.SplitHostPort(s.ustreamerAddr)
+	if err != nil {
+		log.Printf("Error parsing ustreamer address: %v", err)
+		http.Error(w, "Internal server error", http.StatusInternalServerError)
+		return
+	}
 	if err := json.NewEncoder(w).Encode(map[string]string{
-		"ustreamerAddr": s.ustreamerAddr,
+		"ustreamerPort": ustreamerPort,
 	}); err != nil {
 		log.Printf("Error encoding config: %v", err)
 		http.Error(w, "Internal server error", http.StatusInternalServerError)
