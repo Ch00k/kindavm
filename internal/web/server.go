@@ -168,6 +168,7 @@ func (s *Server) startUstreamer() error {
 	args := []string{
 		"--persistent",
 		"--device", s.videoDevice,
+		"--dv-timings",
 		"--host", ustreamerHost,
 		"--port", ustreamerPort,
 		"--resolution", "1280x720",
