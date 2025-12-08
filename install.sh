@@ -170,7 +170,7 @@ echo "To uninstall: sudo kindavm-uninstall.sh"
 # Show completion message
 echo
 if [ "$UPGRADE_MODE" = true ]; then
-    echo "kindavm upgraded: $CURRENT_VERSION → $LATEST_VERSION"
+    echo "kindavm upgraded: $CURRENT_VERSION -> $LATEST_VERSION"
 else
     echo "kindavm $LATEST_VERSION installed successfully"
 fi

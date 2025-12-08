@@ -1,6 +1,6 @@
 [Unit]
 Description=KindaVM Initialization
-After=sys-kernel-config.mount systemd-modules-load.service
+After=sys-kernel-config.mount systemd-modules-load.service multi-user.target
 Requires=sys-kernel-config.mount systemd-modules-load.service
 
 [Service]

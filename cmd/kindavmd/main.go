@@ -20,10 +20,10 @@ var Version = "dev"
 
 func main() {
 	// Command line flags
-	addr := flag.String("addr", "localhost:8080", "HTTP server address")
+	addr := flag.String("addr", "localhost:8876", "HTTP server address")
 	hidDevice := flag.String("hid", "/dev/hidg0", "HID device path")
 	videoDevice := flag.String("video-device", "/dev/video0", "V4L2 video device path")
-	ustreamerAddr := flag.String("ustreamer-addr", "0.0.0.0:8081", "ustreamer address (host:port)")
+	ustreamerAddr := flag.String("ustreamer-addr", "0.0.0.0:8877", "ustreamer address (host:port)")
 	version := flag.Bool("version", false, "Print version and exit")
 	flag.Parse()
 
