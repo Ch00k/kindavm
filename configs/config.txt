@@ -1,0 +1,15 @@
+# For more options and information see
+# http://rptl.io/configtxt
+# Some settings may impact device functionality. See link above for details
+
+# Based on https://github.com/pikvm/kvmd/blob/master/configs/os/boot-config/v2-hdmi-zero2w.txt
+
+arm_64bit=1
+arm_boost=1
+disable_fw_kms_setup=1
+dtparam=audio=off
+enable_uart=1
+hdmi_force_hotplug=1
+dtoverlay=dwc2,dr_mode=peripheral
+dtoverlay=tc358743
+dtoverlay=disable-bt

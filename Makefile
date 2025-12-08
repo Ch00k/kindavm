@@ -1,4 +1,4 @@
-.PHONY: lint test test-verbose test-one test-ci build build-native run release-patch release-minor release-major
+.PHONY: lint test test-verbose test-one test-ci build build-native run package release-patch release-minor release-major
 
 .EXPORT_ALL_VARIABLES:
 
@@ -36,6 +36,24 @@ build-native:
 
 run:
 	go run ./cmd/kindavmd
+
+package: build
+	@echo "Creating release package..."
+	@mkdir -p $(KINDAVMD_BUILD_ARTIFACTS_DIR)/package
+	@cp $(KINDAVMD_BUILD_ARTIFACTS_DIR)/$(KINDAVMD_EXECUTABLE_FILENAME) $(KINDAVMD_BUILD_ARTIFACTS_DIR)/package/kindavmd
+	@cp init_hid.sh $(KINDAVMD_BUILD_ARTIFACTS_DIR)/package/
+	@cp init_hdmi.sh $(KINDAVMD_BUILD_ARTIFACTS_DIR)/package/
+	@cp uninstall.sh $(KINDAVMD_BUILD_ARTIFACTS_DIR)/package/
+	@cp kindavm-init.service $(KINDAVMD_BUILD_ARTIFACTS_DIR)/package/
+	@cp kindavmd.service $(KINDAVMD_BUILD_ARTIFACTS_DIR)/package/
+	@cp tools/edidmod $(KINDAVMD_BUILD_ARTIFACTS_DIR)/package/
+	@cp tools/ustreamer $(KINDAVMD_BUILD_ARTIFACTS_DIR)/package/
+	@mkdir -p $(KINDAVMD_BUILD_ARTIFACTS_DIR)/package/configs
+	@cp configs/config.txt $(KINDAVMD_BUILD_ARTIFACTS_DIR)/package/configs/
+	@cp configs/edid.hex $(KINDAVMD_BUILD_ARTIFACTS_DIR)/package/configs/
+	@cd $(KINDAVMD_BUILD_ARTIFACTS_DIR)/package && tar -czf ../kindavm-linux-arm64.tar.gz *
+	@rm -rf $(KINDAVMD_BUILD_ARTIFACTS_DIR)/package
+	@echo "Package created: $(KINDAVMD_BUILD_ARTIFACTS_DIR)/kindavm-linux-arm64.tar.gz"
 
 release-patch:
 	./release.sh patch

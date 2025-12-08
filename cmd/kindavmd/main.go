@@ -6,13 +6,13 @@ import (
 	"flag"
 	"fmt"
 	"log"
+	"net"
 	"os"
 	"os/signal"
 	"syscall"
 
 	"github.com/Ch00k/kindavm/internal/events"
 	"github.com/Ch00k/kindavm/internal/hid"
-	"github.com/Ch00k/kindavm/internal/video"
 	"github.com/Ch00k/kindavm/internal/web"
 )
 
@@ -22,6 +22,8 @@ func main() {
 	// Command line flags
 	addr := flag.String("addr", "localhost:8080", "HTTP server address")
 	hidDevice := flag.String("hid", "/dev/hidg0", "HID device path")
+	videoDevice := flag.String("video-device", "/dev/video0", "V4L2 video device path")
+	ustreamerAddr := flag.String("ustreamer-addr", "0.0.0.0:8081", "ustreamer address (host:port)")
 	version := flag.Bool("version", false, "Print version and exit")
 	flag.Parse()
 
@@ -40,17 +42,14 @@ func main() {
 	// Create event handler
 	handler := events.NewHandler(device)
 
-	// Create video streamer with default config (0x0 means use camera defaults)
-	config := video.H264Config{
-		Width:     0,
-		Height:    0,
-		Framerate: 30,
-		Bitrate:   2000,
+	// Validate ustreamer address
+	_, _, err := net.SplitHostPort(*ustreamerAddr)
+	if err != nil {
+		log.Fatalf("Invalid ustreamer address: %v", err)
 	}
-	h264Streamer := video.NewH264Streamer(config)
 
 	// Create web server
-	server := web.NewServer(*addr, handler, h264Streamer)
+	server := web.NewServer(*addr, handler, *ustreamerAddr, *videoDevice)
 
 	if err := run(*addr, server); err != nil {
 		log.Fatalf("Error: %v", err)
