@@ -35,7 +35,7 @@ build-native:
 	go build -trimpath -ldflags="-s -w -X main.Version=${KINDAVMD_VERSION}" -o ./${KINDAVMD_BUILD_ARTIFACTS_DIR}/${KINDAVMD_EXECUTABLE_FILENAME}-native ./cmd/kindavmd
 
 run:
-	go run ./cmd/kindavmd
+	go run ./cmd/kindavmd --addr 127.0.0.1:8000 -ustreamer-addr 127.0.0.1:8001
 
 package: build
 	@echo "Creating release package..."

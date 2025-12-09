@@ -497,7 +497,6 @@ class KindaVMClient {
             if (!response.ok) {
                 console.warn('Failed to stop video stream on server');
             }
-            this.updateControlButtons();
             console.log('MJPEG streaming stopped');
         } catch (err) {
             console.error('Error stopping video stream:', err);
@@ -508,11 +507,19 @@ class KindaVMClient {
         // Exit pointer lock if active
         if (document.pointerLockElement === this.controlArea) {
             document.exitPointerLock();
+        } else {
+            // If pointer lock wasn't active, manually clear state
+            this.isActive = false;
+            this.controlArea.classList.remove('active');
+            this.releaseAllKeys();
         }
 
         // Stop video and disconnect
         this.stopVideoStream();
         this.disconnect();
+
+        // Update button states after everything is cleared
+        this.updateControlButtons();
     }
 
     handleKeyDown(e) {
