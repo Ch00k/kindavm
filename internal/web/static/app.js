@@ -64,26 +64,26 @@ class KindaVMClient {
         const stopControl = document.getElementById('stopControl');
         const keyboardToggle = document.getElementById('keyboardToggle');
         const keyboardPopup = document.getElementById('keyboardPopup');
-        const closePopup = document.getElementById('closePopup');
+        const settingsPopup = document.getElementById('settingsPopup');
 
         playControl.addEventListener('click', (e) => {
             e.stopPropagation();
+            keyboardPopup.classList.remove('show');
+            settingsPopup.classList.remove('show');
             this.activateControl();
         });
 
         stopControl.addEventListener('click', (e) => {
             e.stopPropagation();
+            keyboardPopup.classList.remove('show');
+            settingsPopup.classList.remove('show');
             this.stopControl();
         });
 
         keyboardToggle.addEventListener('click', (e) => {
             e.stopPropagation();
+            settingsPopup.classList.remove('show');
             keyboardPopup.classList.add('show');
-        });
-
-        closePopup.addEventListener('click', (e) => {
-            e.stopPropagation();
-            keyboardPopup.classList.remove('show');
         });
 
         keyboardPopup.addEventListener('click', (e) => {
@@ -96,20 +96,40 @@ class KindaVMClient {
     setupSettings() {
         const settingsToggle = document.getElementById('settingsToggle');
         const settingsPopup = document.getElementById('settingsPopup');
-        const closeSettingsPopup = document.getElementById('closeSettingsPopup');
         const saveSettings = document.getElementById('saveSettings');
         const resetSettings = document.getElementById('resetSettings');
         const qualitySetting = document.getElementById('qualitySetting');
         const qualityValue = document.getElementById('qualityValue');
+        const keyboardPopup = document.getElementById('keyboardPopup');
+
+        this.originalSettings = null;
+
+        const updateButtonStates = () => {
+            if (!this.originalSettings) return;
+
+            const currentSettings = {
+                quality: parseInt(qualitySetting.value),
+                desiredFps:
+                    document.getElementById('fpsSetting').value === ''
+                        ? 0
+                        : parseInt(document.getElementById('fpsSetting').value),
+            };
+
+            const hasChanges =
+                currentSettings.quality !== this.originalSettings.quality ||
+                currentSettings.desiredFps !== this.originalSettings.desiredFps;
+
+            saveSettings.disabled = !hasChanges;
+
+            const isDefaults =
+                parseInt(qualitySetting.value) === 80 && document.getElementById('fpsSetting').value === '';
+            resetSettings.disabled = isDefaults;
+        };
 
         settingsToggle.addEventListener('click', (e) => {
             e.stopPropagation();
+            keyboardPopup.classList.remove('show');
             settingsPopup.classList.add('show');
-        });
-
-        closeSettingsPopup.addEventListener('click', (e) => {
-            e.stopPropagation();
-            settingsPopup.classList.remove('show');
         });
 
         settingsPopup.addEventListener('click', (e) => {
@@ -120,7 +140,10 @@ class KindaVMClient {
 
         qualitySetting.addEventListener('input', (e) => {
             qualityValue.textContent = e.target.value;
+            updateButtonStates();
         });
+
+        document.getElementById('fpsSetting').addEventListener('input', updateButtonStates);
 
         saveSettings.addEventListener('click', (e) => {
             e.stopPropagation();
@@ -152,25 +175,34 @@ class KindaVMClient {
         document.getElementById('qualitySetting').value = settings.quality;
         document.getElementById('qualityValue').textContent = settings.quality;
         document.getElementById('fpsSetting').value = settings.desiredFps || '';
-        document.getElementById('buffersSetting').value = settings.buffers;
-        document.getElementById('tcpNoDelaySetting').checked = settings.tcpNodelay;
+
+        this.originalSettings = {
+            quality: settings.quality,
+            desiredFps: settings.desiredFps || 0,
+        };
+
+        const saveSettings = document.getElementById('saveSettings');
+        const resetSettings = document.getElementById('resetSettings');
+
+        saveSettings.disabled = true;
+
+        const isDefaults = settings.quality === 80 && settings.desiredFps === 0;
+        resetSettings.disabled = isDefaults;
     }
 
     async saveSettings() {
         const settings = {
             quality: parseInt(document.getElementById('qualitySetting').value),
             desiredFps: parseInt(document.getElementById('fpsSetting').value) || 0,
-            buffers: parseInt(document.getElementById('buffersSetting').value),
-            tcpNodelay: document.getElementById('tcpNoDelaySetting').checked
         };
 
         try {
             const response = await fetch('/settings/update', {
                 method: 'POST',
                 headers: {
-                    'Content-Type': 'application/json'
+                    'Content-Type': 'application/json',
                 },
-                body: JSON.stringify(settings)
+                body: JSON.stringify(settings),
             });
 
             if (!response.ok) {
@@ -178,7 +210,17 @@ class KindaVMClient {
             }
 
             console.log('Settings saved successfully');
+
+            // Update original settings to current values
+            this.updateSettingsUI(settings);
+
             document.getElementById('settingsPopup').classList.remove('show');
+
+            // Restart video if it's currently running
+            if (this.mjpegFeed.src) {
+                await this.stopVideoStream();
+                await this.startVideoStream();
+            }
         } catch (err) {
             console.error('Error saving settings:', err);
             alert('Failed to save settings: ' + err.message);
@@ -188,9 +230,7 @@ class KindaVMClient {
     async resetSettings() {
         const defaultSettings = {
             quality: 80,
-            desiredFps: 30,
-            buffers: 5,
-            tcpNodelay: false
+            desiredFps: 0,
         };
 
         this.updateSettingsUI(defaultSettings);
@@ -199,9 +239,9 @@ class KindaVMClient {
             const response = await fetch('/settings/update', {
                 method: 'POST',
                 headers: {
-                    'Content-Type': 'application/json'
+                    'Content-Type': 'application/json',
                 },
-                body: JSON.stringify(defaultSettings)
+                body: JSON.stringify(defaultSettings),
             });
 
             if (!response.ok) {
@@ -280,17 +320,25 @@ class KindaVMClient {
         const keyInput = document.getElementById('keyInput');
         const specialKeySelect = document.getElementById('specialKeySelect');
 
+        const updateSendButtonState = () => {
+            const hasKey = keyInput.value.trim() !== '';
+            const hasSpecialKey = specialKeySelect.value !== '';
+            sendButton.disabled = !hasKey && !hasSpecialKey;
+        };
+
         // Clear the other input when one is used
         keyInput.addEventListener('input', () => {
             if (keyInput.value) {
                 specialKeySelect.value = '';
             }
+            updateSendButtonState();
         });
 
         specialKeySelect.addEventListener('change', () => {
             if (specialKeySelect.value) {
                 keyInput.value = '';
             }
+            updateSendButtonState();
         });
 
         sendButton.addEventListener('click', (e) => {
@@ -305,6 +353,9 @@ class KindaVMClient {
                 this.sendKeyCombo();
             }
         });
+
+        // Initialize button state
+        updateSendButtonState();
     }
 
     sendKeyCombo() {
@@ -361,7 +412,7 @@ class KindaVMClient {
                     this.sendEvent({
                         type: eventType,
                         code: keyCode,
-                        modifiers: modifiers
+                        modifiers: modifiers,
                     });
                 } else {
                     setTimeout(waitForConnection, 100);
@@ -374,7 +425,7 @@ class KindaVMClient {
         this.sendEvent({
             type: eventType,
             code: keyCode,
-            modifiers: modifiers
+            modifiers: modifiers,
         });
     }
 
@@ -472,7 +523,7 @@ class KindaVMClient {
             }
 
             // Give ustreamer a moment to start
-            await new Promise(resolve => setTimeout(resolve, 500));
+            await new Promise((resolve) => setTimeout(resolve, 500));
 
             // Build URL using current hostname and configured port
             const ustreamerUrl = `http://${window.location.hostname}:${this.ustreamerPort}/stream`;
@@ -541,7 +592,7 @@ class KindaVMClient {
         this.sendEvent({
             type: 'keydown',
             code: e.code,
-            modifiers: modifiers
+            modifiers: modifiers,
         });
     }
 
@@ -558,7 +609,7 @@ class KindaVMClient {
         this.sendEvent({
             type: 'keyup',
             code: e.code,
-            modifiers: modifiers
+            modifiers: modifiers,
         });
     }
 
@@ -571,7 +622,7 @@ class KindaVMClient {
             this.sendEvent({
                 type: 'mousemove',
                 x: e.movementX,
-                y: e.movementY
+                y: e.movementY,
             });
         }
     }
@@ -583,7 +634,7 @@ class KindaVMClient {
 
         this.sendEvent({
             type: 'mousedown',
-            button: this.getButtonName(e.button)
+            button: this.getButtonName(e.button),
         });
     }
 
@@ -594,7 +645,7 @@ class KindaVMClient {
 
         this.sendEvent({
             type: 'mouseup',
-            button: this.getButtonName(e.button)
+            button: this.getButtonName(e.button),
         });
     }
 
@@ -614,7 +665,7 @@ class KindaVMClient {
         if (delta !== 0) {
             this.sendEvent({
                 type: 'wheel',
-                delta: delta
+                delta: delta,
             });
         }
     }
@@ -630,10 +681,14 @@ class KindaVMClient {
 
     getButtonName(button) {
         switch (button) {
-            case 0: return 'left';
-            case 1: return 'middle';
-            case 2: return 'right';
-            default: return 'left';
+            case 0:
+                return 'left';
+            case 1:
+                return 'middle';
+            case 2:
+                return 'right';
+            default:
+                return 'left';
         }
     }
 
@@ -643,7 +698,7 @@ class KindaVMClient {
             this.sendEvent({
                 type: 'keyup',
                 code: code,
-                modifiers: []
+                modifiers: [],
             });
         }
         this.pressedKeys.clear();
@@ -659,6 +714,6 @@ class KindaVMClient {
 }
 
 // Initialize the client when the page loads
-window.addEventListener("DOMContentLoaded", () => {
+window.addEventListener('DOMContentLoaded', () => {
     new KindaVMClient();
 });

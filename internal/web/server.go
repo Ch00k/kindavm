@@ -24,19 +24,15 @@ var staticFiles embed.FS
 
 // VideoSettings holds configurable ustreamer parameters
 type VideoSettings struct {
-	Quality    int  `json:"quality"`
-	DesiredFPS int  `json:"desiredFps"`
-	Buffers    int  `json:"buffers"`
-	TCPNodelay bool `json:"tcpNodelay"`
+	Quality    int `json:"quality"`
+	DesiredFPS int `json:"desiredFps"`
 }
 
 // DefaultVideoSettings returns the default video settings
 func DefaultVideoSettings() VideoSettings {
 	return VideoSettings{
 		Quality:    80,
-		DesiredFPS: 30,
-		Buffers:    5,
-		TCPNodelay: false,
+		DesiredFPS: 0,
 	}
 }
 
@@ -167,14 +163,14 @@ func (s *Server) startUstreamer() error {
 
 	args := []string{
 		"--persistent",
+		"--exit-on-parent-death",
 		"--device", s.videoDevice,
 		"--dv-timings",
+		"--workers", "3",
 		"--host", ustreamerHost,
 		"--port", ustreamerPort,
-		"--resolution", "1280x720",
 		"--format", "UYVY",
 		"--quality", fmt.Sprintf("%d", settings.Quality),
-		"--buffers", fmt.Sprintf("%d", settings.Buffers),
 		"--drop-same-frames", "30",
 		"--slowdown",
 	}
@@ -183,13 +179,8 @@ func (s *Server) startUstreamer() error {
 		args = append(args, "--desired-fps", fmt.Sprintf("%d", settings.DesiredFPS))
 	}
 
-	if settings.TCPNodelay {
-		args = append(args, "--tcp-nodelay")
-	}
-
-	log.Printf("Starting ustreamer on %s with settings: quality=%d, fps=%d, buffers=%d, tcp-nodelay=%v",
-		s.ustreamerAddr, settings.Quality, settings.DesiredFPS, settings.Buffers, settings.TCPNodelay)
 	s.ustreamerCmd = exec.Command("ustreamer", args...)
+	log.Printf("Starting ustreamer: %s %v", s.ustreamerCmd.Path, s.ustreamerCmd.Args[1:])
 
 	s.ustreamerCmd.Stderr = os.Stderr
 	s.ustreamerCmd.Stdout = os.Stdout
@@ -298,11 +289,6 @@ func (s *Server) handleUpdateSettings(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if settings.Buffers < 2 || settings.Buffers > 10 {
-		http.Error(w, "Buffers must be between 2 and 10", http.StatusBadRequest)
-		return
-	}
-
 	if settings.DesiredFPS < 0 || settings.DesiredFPS > 60 {
 		http.Error(w, "Desired FPS must be between 0 and 60", http.StatusBadRequest)
 		return
@@ -312,8 +298,7 @@ func (s *Server) handleUpdateSettings(w http.ResponseWriter, r *http.Request) {
 	s.videoSettings = settings
 	s.settingsMu.Unlock()
 
-	log.Printf("Updated video settings: quality=%d, fps=%d, buffers=%d, tcp-nodelay=%v",
-		settings.Quality, settings.DesiredFPS, settings.Buffers, settings.TCPNodelay)
+	log.Printf("Updated video settings: quality=%d, fps=%d", settings.Quality, settings.DesiredFPS)
 
 	w.Header().Set("Content-Type", "application/json")
 	if err := json.NewEncoder(w).Encode(map[string]string{"status": "updated"}); err != nil {
