@@ -18,10 +18,11 @@ body {
 }
 
 .header {
+    font-size: 14px;
     display: flex;
     justify-content: space-between;
     align-items: center;
-    padding: 2px 12px;
+    padding: 0px 12px;
     background: #252525;
     flex-shrink: 0;
     gap: 20px;
@@ -33,7 +34,7 @@ body {
     display: flex;
     align-items: center;
     gap: 10px;
-    padding: 8px 16px;
+    padding: 2px 4px;
     background: #2a2a2a;
     border-radius: 6px;
     color: #e0e0e0;
@@ -46,10 +47,10 @@ body {
 }
 
 .header-button {
-    width: 36px;
-    height: 36px;
-    border: 2px solid #444;
-    border-radius: 8px;
+    width: 24px;
+    height: 24px;
+    border: 1px solid #444;
+    border-radius: 4px;
     cursor: pointer;
     transition: all 0.2s;
     display: flex;
@@ -58,8 +59,12 @@ body {
     background: #2a2a2a;
 }
 
+.header-button svg {
+    width: 16px;
+    height: 16px;
+}
+
 .header-button:hover:not(:disabled) {
-    transform: translateY(-2px);
     box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
 }
 
@@ -114,12 +119,12 @@ body {
     background: #1a1a1a;
     min-height: 0;
     overflow: hidden;
-    padding: 10px;
+    padding: 5px;
 }
 
 h1 {
     color: #4a9eff;
-    font-size: 2rem;
+    font-size: 1.5rem;
 }
 
 .control-area {
@@ -315,7 +320,7 @@ kbd {
 .control-buttons {
     display: flex;
     flex-direction: row;
-    gap: 20px;
+    gap: 28px;
 }
 
 .control-button-group {
@@ -337,7 +342,7 @@ kbd {
 
 .control-button {
     flex: 1;
-    padding: 8px 12px;
+    padding: 8px 8px;
     background: #2a2a2a;
     color: #4a9eff;
     border: 1px solid #444;
@@ -352,7 +357,6 @@ kbd {
 .control-button:hover {
     background: #333;
     border-color: #4a9eff;
-    transform: translateY(-2px);
     box-shadow: 0 2px 8px rgba(74, 158, 255, 0.3);
 }
 
@@ -510,7 +514,6 @@ kbd {
 
 .send-combo-button:hover:not(:disabled) {
     background: #3a8edf;
-    transform: translateY(-2px);
     box-shadow: 0 4px 12px rgba(74, 158, 255, 0.4);
 }
 
@@ -697,7 +700,6 @@ kbd {
 
 .save-settings-button:hover:not(:disabled) {
     background: #218838;
-    transform: translateY(-2px);
     box-shadow: 0 4px 12px rgba(40, 167, 69, 0.4);
 }
 
@@ -726,7 +728,6 @@ kbd {
 
 .reset-settings-button:hover:not(:disabled) {
     background: #5a6268;
-    transform: translateY(-2px);
     box-shadow: 0 4px 12px rgba(108, 117, 125, 0.4);
 }
 
