@@ -72,7 +72,7 @@ rm kindavm.tar.gz
 # Install dependencies
 echo "Installing dependencies..."
 sudo apt-get update
-sudo apt-get install --no-install-recommends --no-install-suggests --yes v4l-utils
+sudo apt-get install --no-install-recommends --no-install-suggests --yes v4l-utils libevent-2.1-7t64 libevent-pthreads-2.1-7t64 libjpeg62-turbo
 
 echo "Installing KindaVM..."
 
@@ -141,7 +141,7 @@ sudo cp kindavm-init-hid.service /etc/systemd/system/
 sudo cp kindavm-init-hdmi.service /etc/systemd/system/
 sudo cp kindavmd.service /etc/systemd/system/
 sudo systemctl daemon-reload
-sudo systemctl disable kindavm-init.service 2>/dev/null || true  # Disable legacy service
+sudo systemctl disable kindavm-init.service 2>/dev/null || true # Disable legacy service
 sudo systemctl enable kindavm-init-hid.service
 sudo systemctl enable kindavm-init-hdmi.service
 sudo systemctl enable kindavmd.service
